@@ -450,13 +450,16 @@
         // before the catch: light corruption, held between ~9 and 15
         var target = 12 + 3 * Math.sin(now() / 4000);
         S.instability = clamp(target, 5, 15);
+      } else if (S.instability >= 100) {
+        // check before decaying: purchases clamp instability to exactly 100, and decaying first
+        // pulled it back under 100 in the same tick, so the crash could never fire
+        if (!crashing) crash();
       } else {
         var decay = BASE_DECAY + num(TG.effects && TG.effects.instabilityDecay, 0);
         var r = TG.route(S.currentRoute);
         var rise = r && r.special === 'glitch_city' ? CITY_RISE : 0;
         S.instability = clamp(S.instability + (rise - decay) * dt, 0, 100);
       }
-      if (S.instability >= 100 && !crashing) crash();
     } else if (S.instability > 0 && !S.flags.glitch) {
       S.instability = Math.max(0, S.instability - BASE_DECAY * 5 * dt);
     }
@@ -817,6 +820,7 @@
   // ------------------------------------------------------------ load / init
   function onLoad() {
     ensureState();
+    var reseeded = genSeed !== S.prestige.seed;
     ensureGenerated();
     crashing = false;
     lastLevel = -1;
@@ -830,6 +834,9 @@
     updateHeader();
     if (S.settings.tab === 'glitch') renderTab();
     if (S.settings.tab === 'lab') renderHof();
+    // an imported save from another cartridge has a different seed: ui.js (which handles 'load'
+    // first) drew its glitch encounters with the old names/sprites, so let it rebuild once
+    if (reseeded && S.encounters.some(function (e) { return byId[e.id]; })) TG.emit('load', S);
   }
 
   function rdMult() {
