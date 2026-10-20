@@ -110,7 +110,7 @@
 
   function colorMode() {
     var p = document.body && document.body.dataset ? document.body.dataset.palette : '';
-    return p === 'rse' || p === 'gbc';
+    return p === 'rse';
   }
 
   function hexRamp(r) { return { '1': parseColor(r[0]), '2': parseColor(r[1]), '3': parseColor(r[2]) }; }
