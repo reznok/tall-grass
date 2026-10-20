@@ -276,3 +276,36 @@ Tap = `1 × tapMult × (bike ? 5 : 1) + tapAddRate × rd/sec`.
 - ui.js renders by diffing minimal text; never rebuild the whole DOM every tick (mobile perf). Full re-render only on structural events (buy/unlock/badge); per-tick update only numbers/bars.
 - Palette via CSS variables on `:root` / `body[data-palette="dmg"|"gbc"|"glitch"]`.
 - Glitch effects are CSS classes toggled by `js/systems/glitch.js`: `body.glitch-1 .. glitch-3`, text corruption is done by ui.js reading `TG.state.instability` (if `TG.systems?.glitch` exists).
+
+---
+
+## Engine additions
+
+Optional fields/APIs added by the engine (all additive). Late-game systems may rely on them.
+
+**State (`TG.state`) extra fields**
+- `tabs: {grass,dex,lab,town?,map?,glitch?,sram?}` — which tabs are unlocked (UI shows `.tabbtn` only for these). Unlock with `TG.unlockTab(name)` (emits `tabs`).
+- `settings.tab` (last open tab), `settings.buyAmt` (`1|10|'max'`).
+- `ballsBought` (Poké Mart price scaling), `producersEverBought`.
+- `logQueue: [{text, cls}]` — story lines waiting to be revealed (one every `TG.config.logLineDelayMs`, 900 ms). `TG.fire` queues; `TG.log` is immediate.
+- `acc: {enc, balls, candy, auto, drip}` — fractional accumulators; `candyRR` (round-robin index); `encUid` (next encounter uid).
+- `nextEventAt`, `nextIdleAt` (ms timestamps), `lastNight` (bool|null).
+- `stats.ballsThrown`, `stats.eventsSeen`, `stats.fled`.
+- Encounter objects: `{ uid, id, shiny, misses, catchRate?, noFlee? }` (`catchRate` overrides the species value, `noFlee` disables fleeing — used for Mew).
+- `storyShown` keys are `trigger` or `trigger.subkey` (e.g. `badge.cerulean` vs `route_unlock.cerulean`).
+
+**Engine API extras**
+- `TG.config` (set before `engine.js` loads to override): `saveKey`, `tickMs`, `autosaveMs`, `eventEverySec`, `idleEverySec`, `logLineDelayMs`, `forceNight` (true/false/null), `noServiceWorker`.
+- `TG.mults` — `{dexBonus, badge, rareCandy, event, glitch, mew, extra, global, dexCount, seenCount}`; `TG.effects` — aggregated upgrade effects (`producerMult{}`, `allProducerMult`, `tapMult`, `tapAddRate`, `encounterMult`, `catchRateMult`, `ballCost`, `dexBonusMult`, `candyMult`, `offlineCap`, `offlineMult`, `autoCatch`, `encounterQueue`, `glitchMult`, `instabilityDecay`).
+- Hooks for systems: `TG.addEffectSource(fn(effects))` (mutate aggregated effects), `TG.addRateMod(fn() -> mult)` (extra global RD multiplier, lands in `mults.extra`), `TG.addSpawnHook(fn(enc, route) -> enc | null | undefined)` (replace / cancel a spawn — use for MissingNo. on the coast), `TG.invalidate()` (force effect recompute).
+- `TG.systems.glitch.rdMult()` (optional) is the `glitchMult` term of the RD stack; `TG.systems.glitch.species(id)` (optional) lets `TG.species()` resolve non-dex ids (e.g. `"missingno"`). `effects.glitchMult` (upgrade effect) multiplies Glitch Byte output, not RD.
+- Glitch Bytes: producers with `gb` output add `rates.gb` (× `effects.glitchMult`) to `state.gb` each tick and offline. Producers with `cost: {gb}` are priced in ▓ (`TG.producerCost` returns `{gb: n}` for them; `TG.producerPrice` returns the number; `TG.producerCurrency(id)` → `'rd'|'gb'`).
+- Producers with `act` > `state.act` are hidden unless owned.
+- Requirements objects may also contain `gyms: [id]`, `upgrades: [id]`, `producers: {id:n}`, `rdTotal`; `TG.reqStatus(req)` → `[{key,label,ok}]`, `TG.meets(req)`.
+- Misc: `TG.species(id)`, `TG.route/producer/upgrade/gym(id)`, `TG.spawnEncounter({id, shiny, catchRate, noFlee, force})`, `TG.registerCatch(enc, weight, silent)`, `TG.throwBallUid(uid)`, `TG.evolveTargets(id)` / `TG.evolve(id, targetId)` (Eevee `evolvesToAlt`), `TG.canEvolve(id)`, `TG.evolutionUnlocked()` (flag `daycare`/`evolution` or 2 badges), `TG.buyBalls(n)`, `TG.ballPrice(n)` (20 RD × `ballCost` × (1 + 0.1% per ball ever bought)), `TG.maxAffordable(id)`, `TG.producerVisible(p)`, `TG.upgradeAvailable(u)`, `TG.routeAvailable(r)`, `TG.setRoute(id)`, `TG.gymStatus(g)`, `TG.tapTruck()`, `TG.truckVisible()`, `TG.talkOldMan()`, `TG.oldManAvailable()`, `TG.counterEvent()`, `TG.startEvent(id)`, `TG.applyOffline(seconds)`, `TG.catchUp()`, `TG.newGame()`, `TG.setAct(n)`, `TG.queueLog(text, cls)`, `TG.flushLog()`, `TG.storyRandom(key)`, `TG.fmtLine(text)` (`{name}`, `{rival}`, `{route}`), `TG.debugInfo()`, `TG.start()/stop()/step(dt)`, `TG.addRD(x)`, `TG.distributeCandy(n)`.
+- Extra events: `tap`, `throw`, `encounter` (`{type:'spawn'|'throw'}`), `dex`, `candy`, `evolve`, `flag`, `tabs`, `truck`, `drip`, `story`, `daynight`, `offline` (summary object; systems may push strings to `summary.lines` synchronously — the modal is shown on the next task), `credits` (`{lines}`), `credits_done`, `route_enter` (route object; for the glitch agent), `tabshow`, `boot`.
+- Story triggers fired by the engine: `start, first_tap, first_catch, first_producer, first_upgrade, first_evolve, first_flee, route_unlock.<route>, badge.<gym>, dex_10/25/50/100/150/151, oldman, truck_found, truck_moved, mew, champion, night, shiny, act.<n>, offline_return, debug_menu`; random: `idle_lines`, `{rival}` in event text. Log cls comes from `TG.data.storyCls` when present.
+- Boot order (`main.js`): `TG.init()` → `TG.ui.init()` → `TG.systems[k].init()` for each system → `TG.catchUp()` → `TG.start()`.
+- Sprite shades: `'1'→--c1`, `'2'→--c2`, `'3'→--c3`, `'.'` transparent (`--c0` is the background). Extra palette `'light'` (1→c0, 2→c1, 3→c2) is used for the grass texture.
+
+**UI (`TG.ui`)**: `init, showTab(name), markDirty(...tabs), refresh(), toast(text, ms), modal({title, lines|text|node, buttons:[{label, primary, danger, onClick}]}), confirm(text, onYes, yesLabel), corrupt(text, intensity?), glitchIntensity(), setPalette(p), repaint(), playCredits(lines), toggleDebug(), floatText(xPct, yPct, text, cls)`. `#tab-glitch` / `#tab-sram` sections are empty and owned by the systems. Set `document.body.dataset.paletteLock = '1'` to stop `ui.js` from overriding `data-palette` (e.g. while the glitch palette is forced). CSS: `body.glitch-1..3`, `body.crash`, `body.night`, `body.reduce-motion`, `body[data-act]`.

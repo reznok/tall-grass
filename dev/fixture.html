@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tall Grass — dev fixture</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-palette="dmg">
+<!-- Dev fixture: engine + UI with a tiny inline dataset (no js/data/* needed).
+     Uses its own save key so it never touches the real save.
+     Console helpers: TG.state, TG.debugInfo(), TG.startEvent('lucky_egg'), TG.config.forceNight = true -->
+<script>
+  window.TG = { config: { saveKey: 'tallgrass.dev.fixture', eventEverySec: 30, noServiceWorker: true } };
+</script>
+<script src="../js/numbers.js"></script>
+<script src="../js/sprite.js"></script>
+<script src="../js/audio.js"></script>
+<script>
+(function () {
+  var TG = window.TG;
+  TG.sprites.ball = [
+    "................", "......3333......", "....33111133....", "...3111111113...",
+    "..311111111113..", "..311111111113..", ".31111111111113.", ".33333333333333.",
+    ".33333223333333.", ".32222232222223.", "..322223222223..", "..322222222223..",
+    "...3222222223...", "....33222233....", "......3333......", "................"
+  ];
+  TG.sprites[16] = [
+    "................", "................", "......3333......", ".....311113.....",
+    "....31131113....", "...331111113....", "..3221111113....", "...33111111333..",
+    "....3111112223..", "....31111222223.", "....3311122223..", ".....333333333..",
+    "......3...3.....", ".....33..33.....", "................", "................"
+  ];
+  TG.data.pokemon = [
+    { id: 1, name: "Bulbasaur", types: ["Grass", "Poison"], family: "bulbasaur", stage: 1, evolvesTo: 2, candyToEvolve: 3, rarity: 2, catchRate: 0.6, baseValue: 15, entry: "A seed on its back. It naps in the sun.", legendary: false },
+    { id: 2, name: "Ivysaur", types: ["Grass", "Poison"], family: "bulbasaur", stage: 2, evolvesTo: null, candyToEvolve: null, rarity: 3, catchRate: 0.4, baseValue: 40, entry: "The bud grows heavy.", legendary: false },
+    { id: 16, name: "Pidgey", types: ["Normal", "Flying"], family: "pidgey", stage: 1, evolvesTo: null, candyToEvolve: null, rarity: 1, catchRate: 0.75, baseValue: 10, entry: "Kicks up sand to hide.", legendary: false },
+    { id: 151, name: "Mew", types: ["Psychic"], family: "mew", stage: 1, evolvesTo: null, candyToEvolve: null, rarity: 5, catchRate: 0.05, baseValue: 5000, entry: "It remembers the save file.", legendary: true }
+  ];
+  TG.data.routes = [
+    { id: "pallet", name: "Pallet Town", act: 1, cost: 0, requires: { badges: 0, routes: [], flags: [] }, encounters: [{ id: 16, weight: 80 }, { id: 1, weight: 20 }], flavor: "Home.", special: null },
+    { id: "viridian", name: "Viridian Dock", act: 1, cost: 50, requires: { badges: 0, routes: ["pallet"], flags: [] }, encounters: [{ id: 1, weight: 60 }, { id: 16, weight: 40 }], night: [{ id: 2, weight: 100 }], flavor: "A truck sits on the dock.", special: "truck" }
+  ];
+  TG.data.producers = [
+    { id: "bugcatcher", name: "Bug Catcher", baseCost: 15, costMult: 1.15, rd: 0.5, encounters: 0, balls: 0, candy: 0, unlock: { badges: 0, routes: [], producers: {}, rdTotal: 5 }, flavor: "I like shorts!", desc: "RD/s." },
+    { id: "youngster", name: "Youngster", baseCost: 60, costMult: 1.15, rd: 1, encounters: 0.2, balls: 0, candy: 0, unlock: { badges: 0, routes: [], producers: { bugcatcher: 1 }, rdTotal: 0 }, flavor: "Rocks!", desc: "Encounters." },
+    { id: "mart_shelf", name: "Mart Shelf", baseCost: 100, costMult: 1.15, rd: 0, encounters: 0, balls: 0.5, candy: 0.5, unlock: { badges: 1, routes: [], producers: {}, rdTotal: 0, flags: ["mart"] }, flavor: "Balls.", desc: "Balls and candy." }
+  ];
+  TG.data.upgrades = [
+    { id: "net", name: "Bug Net", cost: 30, requires: { producers: { bugcatcher: 1 }, badges: 0, flags: [], upgrades: [], dexCount: 0 }, effect: { type: "tapMult", value: 2 }, flavor: "Swish.", desc: "Tap ×2." },
+    { id: "thrower", name: "Great Ball Thrower", cost: 80, requires: { producers: {}, badges: 0, flags: [], upgrades: ["net"], dexCount: 1 }, effect: { type: "autoCatch", value: 1 }, flavor: "A Youngster throws for you.", desc: "Auto-catch 1/s." },
+    { id: "bike", name: "Bicycle", cost: 100, requires: { producers: {}, badges: 0, flags: [], upgrades: [], dexCount: 0 }, effect: { type: "flag", value: "bike" }, flavor: "Ding ding.", desc: "Tap ×5, combo." }
+  ];
+  TG.data.gyms = [
+    { id: "pewter", name: "Pewter Gym", leader: "Brock", badge: "Boulder Badge", badgeIndex: 1, cost: 100, requires: { dexCount: 1, types: {}, routes: [], badges: 0, flags: [] }, quote: "Rocks don't rush.", reward: { flags: ["mart"], globalMult: 1.25, unlockTabs: ["town"], log: "Brock hands you the BOULDER BADGE." }, spriteKey: null },
+    { id: "cerulean", name: "Cerulean Gym", leader: "Misty", badge: "Cascade Badge", badgeIndex: 2, cost: 200, requires: { dexCount: 2, types: { Grass: 1 }, routes: ["viridian"], badges: 1, flags: [] }, quote: "Splash.", reward: { flags: ["daycare", "strength", "gbc"], globalMult: 1.5, log: "Misty hands you the CASCADE BADGE." }, spriteKey: null }
+  ];
+  TG.data.story = {
+    start: ["Prof. OAK: Welcome, {name}! The grass is full of POKéMON.", "Tap the tall grass to look for them."],
+    first_tap: ["Something rustles..."],
+    first_catch: ["Prof. OAK: You caught one! Your first entry."],
+    first_producer: ["A Bug Catcher joins your research."],
+    route_unlock: { viridian: ["The dock smells of salt and diesel."] },
+    badge: { pewter: ["Prof. OAK: A badge! The Poké Mart will serve you now."] },
+    dex_10: ["Ten!"],
+    oldman: ["OLD MAN: Back in my day we caught them with our hands.", "He mutters something about the coast."],
+    truck_found: ["There's a truck parked by the water. Odd."],
+    truck_moved: ["The truck rolls aside..."],
+    mew: ["MEW: ...you found me."],
+    champion: ["You are the Champion."],
+    credits: ["TALL GRASS", "", "a fixture", "", "THE END"],
+    night: ["Night falls."],
+    shiny: ["It sparkles!"],
+    rival: ["GARY: Smell ya later!", "GARY: Still here?"],
+    idle_lines: ["The wind blows.", "Somewhere a Pidgey coos."]
+  };
+  TG.data.events = [
+    { id: "rival", weight: 10, minAct: 1, duration: 0, text: "{rival}", effect: { type: "none" } },
+    { id: "lucky_egg", weight: 4, minAct: 1, duration: 30, text: "A LUCKY EGG rolls by.", effect: { type: "rdMult", value: 7 } },
+    { id: "rocket_raid", weight: 5, minAct: 1, duration: 20, text: "TEAM ROCKET is stealing your research!", effect: { type: "steal", pct: 0.1, counter: "fight", counterLabel: "FIGHT!" } },
+    { id: "zubat", weight: 3, minAct: 1, duration: 15, text: "Pidgey. Pidgey. PIDGEY.", effect: { type: "encounterMult", value: 10, forceSpecies: 16 } },
+    { id: "gift", weight: 3, minAct: 1, duration: 0, text: "A stranger gives you 5 balls.", effect: { type: "freeBalls", count: 5 } }
+  ];
+})();
+</script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/main.js"></script>
+</body>
+</html>

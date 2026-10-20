@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f380f">
+<meta name="description" content="Tall Grass — an idle Pokémon-themed fan game. Tap the grass. Fill the Pokédex.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Tall Grass</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-palette="dmg">
+<div id="app">
+  <header id="hdr" class="hdr">
+    <button id="title" class="title" type="button" aria-label="Tall Grass">TALL GRASS</button>
+    <div class="hdr-stats">
+      <div class="hdr-rd"><span id="rd">0</span><small> RD</small></div>
+      <div class="hdr-rate" id="rdps">0/s</div>
+    </div>
+    <div class="hdr-side">
+      <div class="hdr-name" id="hdr-name">RED</div>
+      <div id="badges" class="badges" aria-label="Badges"></div>
+    </div>
+  </header>
+  <nav id="tabbar" class="tabbar" aria-label="Tabs">
+    <button class="tabbtn" type="button" data-tab="grass">GRASS</button>
+    <button class="tabbtn" type="button" data-tab="dex">DEX</button>
+    <button class="tabbtn" type="button" data-tab="town" hidden>TOWN</button>
+    <button class="tabbtn" type="button" data-tab="map" hidden>MAP</button>
+    <button class="tabbtn" type="button" data-tab="lab">LAB</button>
+    <button class="tabbtn" type="button" data-tab="glitch" hidden>&#9619;&#9619;&#9619;</button>
+    <button class="tabbtn" type="button" data-tab="sram" hidden>SRAM</button>
+  </nav>
+  <main id="main">
+    <section id="tab-grass" class="tab"></section>
+    <section id="tab-dex" class="tab" hidden></section>
+    <section id="tab-town" class="tab" hidden></section>
+    <section id="tab-map" class="tab" hidden></section>
+    <section id="tab-lab" class="tab" hidden></section>
+    <section id="tab-glitch" class="tab" hidden></section>
+    <section id="tab-sram" class="tab" hidden></section>
+  </main>
+</div>
+<div id="modal" class="modal" hidden></div>
+<div id="toast" class="toast" hidden></div>
+<div id="credits" class="credits" hidden></div>
+<div id="debug" class="debug" hidden></div>
+<noscript><p class="box" style="margin:16px">TALL GRASS needs JavaScript to run.</p></noscript>
+
+<script src="js/numbers.js"></script>
+<script src="js/sprite.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data/sprites_a.js"></script>
+<script src="js/data/sprites_b.js"></script>
+<script src="js/data/sprites_c.js"></script>
+<script src="js/data/pokemon.js"></script>
+<script src="js/data/routes.js"></script>
+<script src="js/data/producers.js"></script>
+<script src="js/data/upgrades.js"></script>
+<script src="js/data/gyms.js"></script>
+<script src="js/data/story.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/systems/glitch.js"></script>
+<script src="js/systems/sram.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

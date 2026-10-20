@@ -1,0 +1,15 @@
+{
+  "name": "Tall Grass",
+  "short_name": "Tall Grass",
+  "description": "An idle Pokémon-themed fan game. Tap the grass. Fill the Pokédex.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#9bbc0f",
+  "theme_color": "#0f380f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
