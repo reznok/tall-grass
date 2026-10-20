@@ -21,12 +21,14 @@
       master.gain.value = 0.15;
       master.connect(ctx.destination);
     }
-    if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) { /* ignore */ } }
+    // iOS Safari also reports 'interrupted' (calls, backgrounding); resume from any non-running state
+    if (ctx.state !== 'running' && ctx.state !== 'closed') { try { ctx.resume(); } catch (e) { /* ignore */ } }
     return ctx;
   }
 
   function onGesture() { gestured = true; ensure(); }
-  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
+  // iOS only unlocks audio from touchend/click, not touchstart/pointerdown
+  ['pointerdown', 'keydown', 'touchstart', 'touchend', 'click'].forEach(function (ev) {
     window.addEventListener(ev, onGesture, { capture: true, passive: true });
   });
 
