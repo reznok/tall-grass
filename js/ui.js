@@ -538,7 +538,33 @@
       cell.setAttribute('aria-label', '#' + pad3(id) + ' ' + (k[0] === 'u' ? 'unknown' : sp ? sp.name : '???'));
     }
     updateDex();
-    if (selectedDex) renderDexDetail();
+    if (selectedDex) updateDexDetail();
+  }
+
+  // structural signature of the detail panel: rebuild only when this changes, otherwise just
+  // refresh the numbers (candy/catch events fire every tick late-game; rebuilding then would
+  // replace the EVOLVE button under the player's finger and swallow the click)
+  function dexDetailSig(id) {
+    const st = S();
+    const d = st.dex[id] || {};
+    const sp = TG.species(id);
+    const chk = sp && sp.evolvesTo ? TG.canEvolve(id) : null;
+    const tSeen = TG.evolveTargets(id).map(t => (st.dex[t] && st.dex[t].caught ? 1 : 0)).join('');
+    return [id, !!d.seen, (d.caught || 0) > 0, d.shiny || 0, chk ? chk.ok + ':' + chk.reason : '', tSeen].join('|');
+  }
+
+  function updateDexDetail() {
+    const box = refs.dDetail;
+    if (!box || box._sig !== dexDetailSig(selectedDex)) { renderDexDetail(); return; }
+    const st = S();
+    const d = st.dex[selectedDex] || {};
+    const sp = TG.species(selectedDex);
+    if (box._caught) setText(box._caught, TG.fmtInt(d.caught || 0));
+    if (box._candy && sp) setText(box._candy, TG.fmtInt(st.candy[sp.family] || 0));
+    if (box._evo && sp) {
+      const have = TG.canEvolve(selectedDex).have || 0;
+      box._evo.forEach(s => setText(s, ' (' + TG.fmtInt(Math.min(have, sp.candyToEvolve)) + '/' + sp.candyToEvolve + ')'));
+    }
   }
 
   function updateDex() {
@@ -565,6 +591,9 @@
     const sp = TG.species(id);
     const box = refs.dDetail;
     box.innerHTML = '';
+    box._sig = dexDetailSig(id);
+    box._caught = box._candy = null;
+    box._evo = [];
     const cv = h('canvas', { width: 96, height: 96 });
     const known = d.caught > 0;
     const seen = known || d.seen;
@@ -575,8 +604,12 @@
       known && sp ? h('div', { class: 'types' }, (sp.types || []).map(t => h('span', { class: 'type', text: t }))) : null,
       h('p', { class: 'entry', text: known && sp ? sp.entry || '' : seen ? 'Spotted in the wild. Catch one to learn more.' : 'No data.' }));
     if (known) {
-      info.appendChild(h('div', null, 'Caught: ', h('b', { text: TG.fmtInt(d.caught) }), d.shiny ? '  ✨ Shiny: ' : '', d.shiny ? h('b', { text: String(d.shiny) }) : null));
-      if (sp && sp.family) info.appendChild(h('div', null, 'Candy: ', h('b', { text: TG.fmtInt(st.candy[sp.family] || 0) })));
+      box._caught = h('b', { text: TG.fmtInt(d.caught) });
+      info.appendChild(h('div', null, 'Caught: ', box._caught, d.shiny ? '  ✨ Shiny: ' : '', d.shiny ? h('b', { text: String(d.shiny) }) : null));
+      if (sp && sp.family) {
+        box._candy = h('b', { text: TG.fmtInt(st.candy[sp.family] || 0) });
+        info.appendChild(h('div', null, 'Candy: ', box._candy));
+      }
     }
     box.appendChild(cv);
     box.appendChild(info);
@@ -590,10 +623,12 @@
         targets.forEach(tid => {
           const t = TG.species(tid);
           const tSeen = st.dex[tid] && st.dex[tid].caught;
+          const cnt = h('small', { text: ' (' + TG.fmtInt(Math.min(chk.have || 0, sp.candyToEvolve)) + '/' + sp.candyToEvolve + ')' });
+          box._evo.push(cnt);
           actions.appendChild(h('button', {
             class: 'btn' + (chk.ok ? ' primary' : ''), type: 'button', disabled: !chk.ok,
             onclick: () => { if (TG.evolve(id, tid)) { UI.toast((t ? t.name : '???') + '!'); renderDex(); } }
-          }, 'EVOLVE → ' + (tSeen && t ? t.name.toUpperCase() : '???'), h('small', { text: ' (' + TG.fmtInt(Math.min(chk.have || 0, sp.candyToEvolve)) + '/' + sp.candyToEvolve + ')' })));
+          }, 'EVOLVE → ' + (tSeen && t ? t.name.toUpperCase() : '???'), cnt));
         });
       }
     }
@@ -987,6 +1022,7 @@
     if (TG.spriteCacheClear) TG.spriteCacheClear();
     drawGrassStatics();
     if (refs.dexCells) refs.dexCells.forEach(c => { c._k = null; });
+    if (refs.dDetail) refs.dDetail._sig = null;
     if (refs.oak) TG.drawSprite(refs.oak, 'oak', { scale: 6 });
     UI.markDirty('dex');
     if (active === 'dex') renderTab('dex');
