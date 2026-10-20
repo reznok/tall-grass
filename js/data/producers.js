@@ -25,24 +25,24 @@ TG.data = TG.data || {};
   var normal = [
     {
       id: "bugcatcher", name: "Bug Catcher", baseCost: 35, costMult: 1.15,
-      rd: 0.05, encounters: 0, balls: 0, candy: 0,
+      rd: 0.25, encounters: 0, balls: 0, candy: 0,
       unlock: U({ rdTotal: 10 }),
       flavor: "I like shorts! They're comfy and easy to wear!",
-      desc: "Catches bugs. Writes it down. +0.05 RD/s."
+      desc: "Catches bugs. Writes it down. +0.25 RD/s."
     },
     {
       id: "youngster", name: "Youngster", baseCost: 100, costMult: 1.15,
-      rd: 0.45, encounters: 0.01, balls: 0, candy: 0,
+      rd: 2.2, encounters: 0.01, balls: 0, candy: 0,
       unlock: U({ producers: { bugcatcher: 1 }, rdTotal: 75 }),
       flavor: "My RATTATA is in the top percentage of RATTATA. Statistically.",
-      desc: "Throws rocks into the grass. Things come out. +0.45 RD/s, +0.01 encounters/s."
+      desc: "Throws rocks into the grass. Things come out. +2.2 RD/s, +0.01 encounters/s."
     },
     {
       id: "lass", name: "Lass", baseCost: 1100, costMult: 1.15,
-      rd: 2, encounters: 0, balls: 0, candy: 0,
+      rd: 10, encounters: 0, balls: 0, candy: 0,
       unlock: U({ routes: ["route1"], rdTotal: 600 }),
       flavor: "You're a trainer, right? Then you have to take notes with me.",
-      desc: "Keeps meticulous field notes in a pink binder. +2 RD/s."
+      desc: "Keeps meticulous field notes in a pink binder. +10 RD/s."
     },
     {
       id: "mart_shelf", name: "Poké Mart Shelf", baseCost: 12000, costMult: 1.15,
@@ -53,52 +53,52 @@ TG.data = TG.data || {};
     },
     {
       id: "nursejoy", name: "Pokémon Center Nurse", baseCost: 130000, costMult: 1.15,
-      rd: 47, encounters: 0, balls: 0, candy: 0,
+      rd: 120, encounters: 0, balls: 0, candy: 0,
       unlock: U({ badges: 1, rdTotal: 650000 }),
       flavor: "We hope to see you again! We will. We always do.",
-      desc: "Heals, records, files, heals again. +47 RD/s."
+      desc: "Heals, records, files, heals again. +120 RD/s."
     },
     {
       id: "daycare", name: "Day Care Couple", baseCost: 1.4e6, costMult: 1.15,
-      rd: 40, encounters: 0, balls: 0, candy: 0.02,
+      rd: 100, encounters: 0, balls: 0, candy: 0.02,
       unlock: U({ badges: 2, rdTotal: 7e6, flags: ["daycare"] }),
       flavor: "We raised your POKéMON. We do not know where the eggs come from either.",
-      desc: "Raises your POKéMON. +40 RD/s, +0.02 candy/s spread across owned families."
+      desc: "Raises your POKéMON. +100 RD/s, +0.02 candy/s spread across owned families."
     },
     {
       id: "bill_pc", name: "Bill's PC", baseCost: 2e7, costMult: 1.15,
-      rd: 730, encounters: 0, balls: 0, candy: 0,
+      rd: 1800, encounters: 0, balls: 0, candy: 0,
       unlock: U({ badges: 2, rdTotal: 1e8 }),
       flavor: "Accessed BILL's PC. Accessed POKéMON Storage System.",
-      desc: "Sorts every record into boxes, then sorts the boxes. +730 RD/s."
+      desc: "Sorts every record into boxes, then sorts the boxes. +1,800 RD/s."
     },
     {
       id: "safari", name: "Safari Zone Warden", baseCost: 3.3e8, costMult: 1.15,
-      rd: 2800, encounters: 0.05, balls: 0, candy: 0,
+      rd: 7000, encounters: 0.05, balls: 0, candy: 0,
       unlock: U({ badges: 3, rdTotal: 1.7e9 }),
       flavor: "Ah ha fwah! Ma tooth! Thanksh, I mean, thanks.",
-      desc: "Herds rare POKéMON toward your grass. +2,800 RD/s, +0.05 encounters/s."
+      desc: "Herds rare POKéMON toward your grass. +7,000 RD/s, +0.05 encounters/s."
     },
     {
       id: "gamecorner", name: "Game Corner", baseCost: 5.1e9, costMult: 1.15,
-      rd: 16000, encounters: 0, balls: 0, candy: 0,
+      rd: 32000, encounters: 0, balls: 0, candy: 0,
       unlock: U({ badges: 3, routes: ["celadon"], rdTotal: 2.6e10 }),
       flavor: "The slots are hot today. They are always hot today.",
-      desc: "Converts coins into research somehow. Nobody asks how. +16,000 RD/s."
+      desc: "Converts coins into research somehow. Nobody asks how. +32,000 RD/s."
     },
     {
       id: "silph", name: "Silph Co. Lab", baseCost: 7.5e10, costMult: 1.15,
-      rd: 55000, encounters: 0, balls: 0, candy: 0,
+      rd: 110000, encounters: 0, balls: 0, candy: 0,
       unlock: U({ badges: 4, routes: ["saffron"], rdTotal: 3.8e11 }),
       flavor: "Eleven floors. Card-key doors. A prototype in a locked case on the top floor.",
-      desc: "Industrial-scale POKéMON science. +55,000 RD/s."
+      desc: "Industrial-scale POKéMON science. +110,000 RD/s."
     },
     {
       id: "league", name: "Indigo Plateau", baseCost: 1e12, costMult: 1.15,
-      rd: 520000, encounters: 0, balls: 0, candy: 0,
+      rd: 1000000, encounters: 0, balls: 0, candy: 0,
       unlock: U({ badges: 8, rdTotal: 5e12, flags: ["victory_road"] }),
       flavor: "Every trainer's road leads here. It has always been the end of the map.",
-      desc: "The League records every battle ever fought. +520,000 RD/s."
+      desc: "The League records every battle ever fought. +1,000,000 RD/s."
     }
   ];
 
