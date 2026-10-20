@@ -960,7 +960,10 @@
       opts.forEach(([v, l]) => refs.lPal.appendChild(h('option', { value: v, text: l })));
     }
     refs.lPal.value = opts.some(o => o[0] === st.settings.palette) ? st.settings.palette : 'rse';
-    refs.lPal.disabled = opts.length < 2;
+    // while a system forces a palette (Act 3 glitch), a choice here would silently do nothing
+    const locked = !!document.body.dataset.paletteLock;
+    refs.lPal.disabled = opts.length < 2 || locked;
+    refs.lPal.title = locked ? 'Something is overriding the palette.' : '';
   }
 
   function renderLab() {
