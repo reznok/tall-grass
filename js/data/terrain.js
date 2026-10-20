@@ -389,7 +389,7 @@
   TG.data.terrain = {
     types: types,
     byRoute: {
-      pallet: 'town',
+      pallet: 'grass',
       route1: 'grass',
       viridian: 'town',
       route22: 'grass',
