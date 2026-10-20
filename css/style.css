@@ -130,7 +130,7 @@ a { color: var(--c2); }
 .btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
 .btn:disabled, .btn.no { opacity: .45; cursor: default; box-shadow: none; }
 .btn.primary { background: var(--c3); color: var(--c0); }
-.btn.small { min-height: 36px; padding: 4px 8px; font-size: 12px; }
+.btn.small { min-height: 44px; padding: 4px 10px; font-size: 12px; }
 .btn.on { background: var(--c2); color: var(--c0); }
 .btn.danger { border-style: dashed; }
 .btn:focus-visible, .tabbtn:focus-visible { outline: 3px solid var(--c2); outline-offset: 2px; }
@@ -176,7 +176,7 @@ a { color: var(--c2); }
 .hdr-rate { font-size: 12px; opacity: .85; }
 .hdr-side { text-align: right; }
 .hdr-name { font-family: var(--font-px); font-size: 9px; margin-bottom: 4px; }
-.badges { display: grid; grid-template-columns: repeat(4, 10px); gap: 3px; justify-content: end; }
+.badges { display: grid; grid-template-columns: repeat(4, 10px); gap: 3px; justify-content: end; cursor: pointer; padding: 4px 0 4px 8px; margin: -4px 0; }
 .pip { width: 10px; height: 10px; border: 2px solid var(--c1); border-radius: 50%; }
 .pip.on { background: var(--c0); border-color: var(--c0); box-shadow: 0 0 0 1px var(--c2); }
 .pip.champ { border-radius: 1px; transform: rotate(45deg) scale(.8); }
@@ -258,6 +258,11 @@ a { color: var(--c2); }
 .grass-top .tod { font-size: 16px; }
 .ballcount { font-weight: bold; white-space: nowrap; }
 .ballcount canvas { width: 16px; height: 16px; vertical-align: -3px; }
+.ballcount.empty #g-balls { text-decoration: underline wavy; animation: blink 1s steps(2) 3; }
+.buyballs { flex-direction: column; gap: 0; line-height: 1.1; padding: 2px 8px; }
+.buyballs small { font-size: 9px; font-weight: normal; }
+.grass.hint-throw .enc canvas { animation: hintPulse 1.2s ease-in-out infinite; }
+@keyframes hintPulse { 50% { transform: scale(1.12); filter: drop-shadow(0 0 3px var(--c3)); } }
 
 .grass {
   position: relative;
@@ -435,6 +440,9 @@ body.night .grass::after { opacity: .22; }
 .upg .cost { font-family: var(--font-px); font-size: 9px; margin-top: auto; }
 .upg .desc { font-weight: normal; }
 .upg.no .cost::after { content: " \2717"; }
+.upg.locked { opacity: .55; box-shadow: none; cursor: default; border-style: dashed; }
+.upg.locked .cost { font-family: var(--font-mono); font-size: 11px; font-weight: normal; }
+.hint-line { flex-basis: 100%; font-size: 12px; }
 .mart-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 .mart-btns .btn { flex: 1; flex-direction: column; gap: 0; line-height: 1.2; }
 .empty { opacity: .7; font-style: italic; font-size: 12px; }
@@ -451,6 +459,7 @@ body.night .grass::after { opacity: .22; }
 .route:last-child, .gym:last-child { border-bottom: 0; }
 .route .nm, .gym .nm { font-weight: bold; }
 .route .flav, .gym .flav { font-size: 11px; font-style: italic; opacity: .8; }
+.route .rtypes { font-size: 10px; opacity: .8; text-transform: uppercase; letter-spacing: .3px; }
 .route .btn, .gym .btn { grid-row: 1 / span 3; grid-column: 2; min-width: 96px; flex-direction: column; gap: 0; line-height: 1.2; font-size: 12px; }
 .route.here { background: var(--c1); margin: 0 -8px; padding-left: 8px; padding-right: 8px; }
 .route.locked .nm, .gym.locked .nm { opacity: .7; }
@@ -574,7 +583,7 @@ textarea.save {
   padding: 10px;
   white-space: pre-wrap;
 }
-.debug .x { float: right; background: none; color: inherit; border: 1px solid; min-height: 32px; }
+.debug .x { float: right; background: none; color: inherit; border: 1px solid; min-height: 44px; min-width: 44px; }
 
 /* ------------------------------------------------------------ animations */
 @keyframes blink { 50% { opacity: 0; } }
@@ -627,7 +636,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
 .credits.static .roll { position: static; animation: none !important; padding: 48px 0 80px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-iteration-count: 1 !important; transition: none !important; }
-  .grass.rustle, .enc.wobble, .truck.push, .grass-hint, .tabbtn.new::after, .enc.shiny canvas,
+  .grass.rustle, .enc.wobble, .truck.push, .grass-hint, .tabbtn.new::after, .enc.shiny canvas, .grass.hint-throw .enc canvas,
   body[class*="glitch-"] *, body.glitch-3::after { animation: none !important; }
 }
 
@@ -637,6 +646,8 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
 .pbat { width: 9px; height: 6px; border: 1px solid var(--c0); position: relative; background: var(--c2); }
 .pbat::after { content: ""; position: absolute; right: -3px; top: 1px; width: 2px; height: 2px; background: var(--c0); }
 .pbat-n { font-size: 9px; line-height: 1; }
+.hdr-bat { font-family: var(--font-px); font-size: 8px; margin-top: 4px; opacity: .9; white-space: nowrap; }
+.hdr-bat.low { text-decoration: underline wavy; }
 
 .gl-head .gl-big { font-family: var(--font-px); font-size: 18px; margin: 2px 0 4px; word-break: break-all; }
 .gl-sub { font-size: 12px; opacity: .85; }

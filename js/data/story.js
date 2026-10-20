@@ -33,10 +33,19 @@ TG.data.story = {
     "The grass rustles. Something in the grass rustles back.",
     "OAK: Careful! Wild POKéMON live in tall grass. That's rather the point, of course."
   ],
+  first_encounter: [
+    "OAK: There! Something in the grass! Tap it to throw a POKé BALL. Gently. Well, not too gently."
+  ],
   first_catch: [
     "Gotcha. It is smaller up close.",
     "OAK: Wonderful! The POKéDEX recorded it. Every new entry makes the research go faster.",
     "Research Data is how science keeps score."
+  ],
+  town_open: [
+    "OAK: You've gathered enough RESEARCH DATA to pay for help. Have a look in TOWN. People there need work."
+  ],
+  map_open: [
+    "OAK: The road north is open, if you can cover the costs. The MAP shows where you can go next."
   ],
   first_producer: [
     "A Bug Catcher agrees to help. He asks for nothing. He is wearing shorts.",
@@ -52,6 +61,19 @@ TG.data.story = {
   first_flee: [
     "It got away. It did not look back.",
     "OAK: Don't worry. There is always another one. That is the one thing I'm sure of."
+  ],
+  // after the credits roll, while the game has not noticed the coast yet
+  post_credits: [
+    "The HALL OF FAME music fades out. The screen does not go dark. It waits.",
+    "OAK: Strange. My notes say the CINNABAR coast was surveyed. My notes also say it wasn't.",
+    "OAK: That OLD MAN in VIRIDIAN keeps telling people about it. Maybe listen to him, for once."
+  ],
+  // auto-catch has stopped because the bag is empty (repeatable, picked at random)
+  auto_noballs: [
+    "JOEY: I'm out of POKé BALLS! I'm just throwing my hat now!",
+    "JOEY: Hey! The bag's empty! Do I keep throwing rocks? I'm going to keep throwing rocks.",
+    "Your helpers stand at the edge of the grass, holding nothing, waiting for POKé BALLS.",
+    "JOEY: No balls left. I'm pointing at them really hard instead."
   ],
   offline_return: [
     "While you were away, the grass kept growing and your helpers kept writing.",
@@ -632,6 +654,10 @@ TG.data.story = {
     "#006 ▓▓▓▓▓▓",
     "#007 you"
   ],
+  instability_warn: [
+    "the screen is very thin right now",
+    "careful its about to tear"
+  ],
   instability_crash: [
     "The screen goes white. Then grey. Then the log is back, a little shorter than before.",
     "sorry that was me"
@@ -651,6 +677,10 @@ TG.data.story = {
     "it happens to all of us",
     "the battery went in at a factory a long time ago it was only ever meant to last so long"
   ],
+  battery_warn: [
+    "The SAVE BATTERY is almost flat. When it stops, this save file stops with it.",
+    "OAK: If there's anything you meant to do in this save, I would do it now."
+  ],
   battery_dead: [
     "The internal battery has run dry.",
     "The game can be played. However, clock-based events will no longer occur.",
@@ -661,6 +691,7 @@ TG.data.story = {
   prestige_done: [
     "A new game. The grass is exactly where it was.",
     "OAK: Ah, there you are! This world is full of creatures called... hm. Have we met?",
+    "OAK: Never mind. Here, an empty POKéDEX. Go and stand in the tall grass. You know the way, somehow.",
     "There is RARE CANDY in your bag. You don't remember packing it.",
     "it survived in slot 6 so did i"
   ],
@@ -693,7 +724,7 @@ TG.data.storyCls = function (trigger, line) {
   if (typeof line !== "string") return "sys";
   if (/^OAK: /.test(line)) return "oak";
   if (/^BLUE: /.test(line) || trigger === "rival") return "rival";
-  var act34 = { glitch_first: 1, missingno_caught: 1, glitch_whisper: 1, hall_of_fame: 1, instability_crash: 1,
+  var act34 = { glitch_first: 1, missingno_caught: 1, glitch_whisper: 1, hall_of_fame: 1, instability_crash: 1, instability_warn: 1,
     sram_appear: 1, battery_low: 1, battery_dead: 1, prestige_done: 1, debug_menu: 1, dex_0: 1, glitch_city: 1,
     gags: 1 };
   if (act34[trigger] && line === line.toLowerCase() && !/[.!?,]/.test(line)) return "glitch";

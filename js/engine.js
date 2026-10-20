@@ -47,6 +47,7 @@
   var idx = { pokemon: {}, routes: {}, producers: {}, upgrades: {}, gyms: {} };
   var effectsDirty = true;
   var lastTapAt = 0;
+  var autoStarved = false, lastStarveMsg = 0;
   var lastLogReveal = 0;
   var lastSecond = 0;
   var lastAutosave = 0;
@@ -497,9 +498,25 @@
   var FLAG_LABELS = {
     mart: 'Poké Mart', daycare: 'Day Care', bike: 'Bicycle', cut: 'HM Cut', surf: 'HM Surf', fly: 'HM Fly',
     strength: 'HM Strength', pokeflute: 'Poké Flute', lab_cinnabar: 'Cinnabar Lab', victory_road: 'Victory Road',
-    champion: 'Champion', oldman: '???', gbc: 'Color'
+    champion: 'Champion', oldman: '???', glitch: '???', gbc: 'Color'
   };
-  function flagLabel(f) { return FLAG_LABELS[f] || f.replace(/_/g, ' '); }
+  // name the badge that grants a flag, so a locked route says where its key comes from
+  function flagSource(f) {
+    var gs = TG.data.gyms || [];
+    for (var i = 0; i < gs.length; i++) {
+      var rw = gs[i].reward;
+      if (rw && rw.flags && rw.flags.indexOf(f) >= 0 && gs[i].badge) return gs[i].badge;
+    }
+    var us = TG.data.upgrades || [];
+    for (i = 0; i < us.length; i++) if (us[i].effect && us[i].effect.type === 'flag' && us[i].effect.value === f) return 'TOWN';
+    return '';
+  }
+  function flagLabel(f) {
+    var base = FLAG_LABELS[f] || f.replace(/_/g, ' ');
+    if (base === '???' || f === 'champion') return base;
+    var src = flagSource(f);
+    return src ? base + ' (' + src + ')' : base;
+  }
   TG.flagLabel = flagLabel;
 
   // ------------------------------------------------------------ producers
@@ -696,6 +713,7 @@
       TG.log('Something in the grass is SPARKLING...', 'sys');
       if (TG.sfx) TG.sfx.play('shiny');
     }
+    if (!S.storyShown.first_encounter) TG.fire('first_encounter');
     TG.emit('encounter', { type: 'spawn', enc: enc });
     return enc;
   }
@@ -1041,22 +1059,23 @@
     if (!S.tabs.town) {
       var prods = (TG.data.producers || []).filter(TG.producerVisible);
       var cheapest = prods.reduce(function (m, p) { return Math.min(m, num(p.baseCost, 1e99)); }, Infinity);
-      if (S.rd >= cheapest || S.producersEverBought > 0) TG.unlockTab('town');
+      if (S.rd >= cheapest || S.producersEverBought > 0) { TG.unlockTab('town'); TG.fire('town_open'); }
     }
     if (!S.tabs.map) {
       var cheapRoute = Infinity;
       (TG.data.routes || []).forEach(function (r) { if (!S.routes[r.id] && TG.meets(r.requires)) cheapRoute = Math.min(cheapRoute, num(r.cost, 0)); });
-      if (Object.keys(S.routes).length > 1 || S.rdTotal >= cheapRoute) TG.unlockTab('map');
+      if (Object.keys(S.routes).length > 1 || S.rdTotal >= cheapRoute) { TG.unlockTab('map'); TG.fire('map_open'); }
     }
     // day / night
     var night = TG.isNight();
     if (S.lastNight !== night) {
       var first = S.lastNight === null;
       S.lastNight = night;
-      if (night) TG.fire('night');
       if (!first) TG.emit('daynight', night);
       recompute();
     }
+    // the night lines wait until the player has caught something, so they don't bury the intro
+    if (night && S.stats.catches > 0 && !S.storyShown.night) TG.fire('night');
     // events
     if (S.activeEvent && t >= S.activeEvent.endsAt) endEvent();
     if (!S.activeEvent && t >= S.nextEventAt) {
@@ -1129,6 +1148,14 @@
         TG.throwBall(0, true);
       }
       if (S.acc.auto > 1) S.acc.auto = 1;
+      // auto-catch silently stopping is a stall: say so (at most every 3 min)
+      var starved = S.balls < 1 && S.encounters.length > 0;
+      if (starved && !autoStarved && t - lastStarveMsg > 180000) {
+        lastStarveMsg = t;
+        TG.storyRandom('auto_noballs');
+        TG.emit('noballs', { auto: true });
+      }
+      autoStarved = starved;
     }
     // combo decay
     if (S.combo > 1 && t - lastTapAt > 400) S.combo = Math.max(1, S.combo - 1.2 * dt);
@@ -1170,7 +1197,8 @@
         var throws = Math.min(auto * t, S.balls);
         var catches = Math.floor(Math.min(encAvail, throws * avg));
         if (catches > 0) {
-          S.balls = Math.max(0, S.balls - Math.ceil(catches / avg));
+          sum.ballsUsed = Math.min(S.balls, Math.ceil(catches / avg));
+          S.balls = Math.max(0, S.balls - sum.ballsUsed);
           var samples = Math.min(catches, 300);
           var base = Math.floor(catches / samples), rem = catches % samples;
           for (var i = 0; i < samples; i++) {

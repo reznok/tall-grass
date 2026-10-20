@@ -157,9 +157,17 @@
     if (newName && newName !== active) {
       const b = $('.tabbtn[data-tab="' + newName + '"]');
       if (b) b.classList.add('new');
-      UI.toast((TAB_LABELS[newName] || newName.toUpperCase()) + ' unlocked!');
+      // two tabs can open in the same second (TOWN + MAP): one toast naming both
+      tabToasts.push(TAB_LABELS[newName] || newName.toUpperCase());
+      clearTimeout(tabToastTimer);
+      tabToastTimer = setTimeout(() => {
+        const n = tabToasts.splice(0);
+        UI.toast(n.join(' and ') + ' unlocked!', 3000);
+      }, 60);
     }
   }
+  const tabToasts = [];
+  let tabToastTimer = 0;
 
   UI.showTab = function (name) {
     const st = S();
@@ -224,6 +232,7 @@
         <div class="route-name" id="g-route">PALLET TOWN</div>
         <span class="tod" id="g-tod" title="Time of day"></span>
         <span class="ballcount" id="g-ballcount" title="Poké Balls"><canvas id="g-ballicon" width="16" height="16"></canvas><span id="g-ballsym" hidden>◓</span> <span id="g-balls">0</span></span>
+        <button class="btn small buyballs" type="button" id="g-buyballs" hidden>+10<small id="g-buyballs-c"></small></button>
       </div>
       <div class="box event-banner" id="g-event" hidden>
         <span class="event-text" id="g-event-text"></span><span id="g-event-time"></span>
@@ -249,7 +258,7 @@
       gRoute: $('#g-route'), gTod: $('#g-tod'), gBalls: $('#g-balls'), gBallIcon: $('#g-ballicon'), gBallSym: $('#g-ballsym'),
       gEvent: $('#g-event'), gEventText: $('#g-event-text'), gEventTime: $('#g-event-time'), gEventBtn: $('#g-event-btn'),
       grass: $('#grass'), encLayer: $('#enc-layer'), fx: $('#fx-layer'), truck: $('#g-truck'), hint: $('#g-hint'),
-      gTap: $('#g-tap'), gEnc: $('#g-enc'), gDex: $('#g-dex'), gAutoWrap: $('#g-auto-wrap'), gAuto: $('#g-auto'),
+      gBallWrap: $('#g-ballcount'), gTap: $('#g-tap'), gEnc: $('#g-enc'), gDex: $('#g-dex'), gAutoWrap: $('#g-auto-wrap'), gAuto: $('#g-auto'),
       gEncpsWrap: $('#g-encps-wrap'), gEncps: $('#g-encps'),
       gCombo: $('#g-combo'), gComboFill: $('#g-combo-fill'), gComboX: $('#g-combo-x'), logMini: $('#log-mini')
     });
@@ -257,6 +266,11 @@
     refs.grass.addEventListener('pointerdown', onGrassDown);
     refs.grass.addEventListener('contextmenu', e => e.preventDefault());
     refs.gEventBtn.addEventListener('click', () => { TG.counterEvent(); });
+    refs.gBuyBalls = $('#g-buyballs'); refs.gBuyBallsC = $('#g-buyballs-c');
+    refs.gBuyBalls.addEventListener('click', () => {
+      if (TG.buyBalls(10)) UI.toast('+10 Poké Balls.');
+      else { UI.toast('Not enough RD for 10 Poké Balls.'); if (TG.sfx) TG.sfx.play('error'); }
+    });
     drawGrassStatics();
   }
 
@@ -282,14 +296,43 @@
     refs.gTod.title = TG.isNight() ? 'Night' : 'Day';
     setHidden(refs.truck, !TG.truckVisible());
     setHidden(refs.gCombo, !st.flags.bike);
-    setHidden(refs.hint, st.taps >= 12);
+    updateHint();
     renderEvent();
     syncEncounters();
   }
 
+  // the hint under the grass follows what the player still has to learn (or is stuck on)
+  function hintText(st) {
+    const enc = st.encounters.length;
+    const caught = (st.stats.catches || 0) > 0 || TG.mults.dexCount > 0;
+    if (enc && st.balls < 1 && !(TG.effects.autoCatch > 0 && TG.rates.balls > 0)) {
+      return st.flags.mart ? 'OUT OF BALLS · TAP +10 TO BUY' : 'NO BALLS · TAP ONE TO SHOO IT';
+    }
+    if (enc && (st.stats.ballsThrown || 0) < 3 && !caught) return 'TAP A POKéMON TO THROW A BALL';
+    if (!enc && !caught && st.taps < 40) return 'TAP THE TALL GRASS';
+    return '';
+  }
+  function updateHint() {
+    if (!refs.hint) return;
+    const txt = hintText(S());
+    setHidden(refs.hint, !txt);
+    if (txt) setText(refs.hint.firstChild, txt);
+    setClass(refs.grass, 'hint-throw', txt === 'TAP A POKéMON TO THROW A BALL');
+    setClass(refs.gBallWrap, 'empty', S().balls < 1);
+  }
+
   function updateGrass() {
     const st = S();
+    updateHint();
+    if (encEls.size !== st.encounters.length) syncEncounters();
     setText(refs.gBalls, TG.fmtInt(st.balls));
+    const quick = !!st.flags.mart && st.balls < 25;
+    setHidden(refs.gBuyBalls, !quick);
+    if (quick) {
+      const c = TG.ballPrice(10);
+      setText(refs.gBuyBallsC, ' ' + TG.fmt(c) + ' RD');
+      setClass(refs.gBuyBalls, 'no', st.rd < c);
+    }
     setText(refs.gTap, TG.fmt(TG.tapPower()));
     setText(refs.gEnc, TG.fmtPct(TG.tapEncounterChance()));
     setText(refs.gDex, String(TG.mults.dexCount));
@@ -355,7 +398,7 @@
     if (!S().settings.reduceMotion) {
       refs.grass.classList.remove('rustle'); void refs.grass.offsetWidth; refs.grass.classList.add('rustle');
     }
-    if (S().taps === 12) setHidden(refs.hint, true);
+    updateHint();
   }
 
   UI.floatText = function (xPct, yPct, text, cls) {
@@ -458,6 +501,15 @@
       if (!S().settings.reduceMotion) { el.classList.remove('wobble'); void el.offsetWidth; el.classList.add('wobble'); }
       if (!res.auto) UI.floatText(p.x, p.y - 12, 'MISS', 'bad');
     }
+  }
+
+  // an encounter left without a throw (shooed with no balls, or wandered off): animate it out
+  function onGone(enc, type) {
+    if (!enc) return;
+    const el = encEls.get(enc.uid);
+    if (!el || el._leaving) return;
+    leave(el, enc.uid, 'fled');
+    if (type === 'wander') UI.floatText(el._pos.x, el._pos.y - 12, 'BYE', 'bad');
   }
 
   // ------------------------------------------------------------ log
@@ -636,6 +688,7 @@
       if (chk.reason === 'locked') {
         actions.appendChild(h('span', { class: 'dim', text: 'Evolution unlocks with the Cascade Badge.' }));
       } else {
+        if (!chk.ok) actions.appendChild(h('span', { class: 'dim hint-line', text: 'More candy: catch more of this family' + (st.flags.daycare ? ', or hire the Day Care in TOWN.' : '.') }));
         targets.forEach(tid => {
           const t = TG.species(tid);
           const tSeen = st.dex[tid] && st.dex[tid].caught;
@@ -715,7 +768,9 @@
         h('div', { class: 'flav', text: p.flavor ? '"' + p.flavor + '"' : (p.desc || '') }));
       btn.addEventListener('click', () => {
         const amt = st.settings.buyAmt || 1;
+        const before = st.producers[p.id] || 0;
         if (!TG.buyProducer(p.id, amt === 'max' ? 'max' : amt)) { UI.toast('Not enough ' + (TG.producerCurrency(p.id) === 'gb' ? 'Glitch Bytes' : 'RD') + '.'); if (TG.sfx) TG.sfx.play('error'); }
+        else if (!before) UI.toast(p.name + ' joins your research!');
       });
       refs.tProds.appendChild(row);
       prodRows.push({ p, btn, own, info, lbl: btn.firstChild, cost: btn.lastChild });
@@ -743,9 +798,27 @@
       refs.tUpgs.appendChild(b);
       upgBtns.push({ u, b });
     }
-    if (!ups.length) refs.tUpgs.appendChild(h('p', { class: 'empty', text: 'No upgrades available right now.' }));
+    const nextU = nextLockedUpgrade();
+    if (!ups.length) refs.tUpgs.appendChild(h('p', { class: 'empty', text: nextU ? 'Nothing to buy yet. Next up:' : 'No upgrades available right now.' }));
+    if (nextU) refs.tUpgs.appendChild(h('div', { class: 'btn upg locked', 'aria-disabled': 'true' },
+      h('span', { class: 'nm', text: '??? ' + UI.corrupt(nextU.u.name) }),
+      h('span', { class: 'desc', text: nextU.u.desc || '' }),
+      h('span', { class: 'cost', text: 'NEEDS ' + nextU.miss.map(r => r.label).join(', ') })));
     setHidden(refs.tMart, !st.flags.mart);
     updateTown();
+  }
+
+  // the cheapest RD upgrade the player can't see yet whose chain prerequisite is already owned
+  function nextLockedUpgrade() {
+    const st = S();
+    let best = null;
+    for (const u of TG.data.upgrades || []) {
+      if (st.upgrades[u.id] || u.glitch || TG.costParts(u.cost).gb || TG.upgradeAvailable(u)) continue;
+      const miss = TG.reqStatus(u.requires).filter(r => !r.ok);
+      if (!miss.length || miss.some(r => r.key.indexOf('upg_') === 0)) continue;
+      if (!best || costRD(u.cost) < costRD(best.u.cost)) best = { u, miss };
+    }
+    return best;
   }
 
   function unlockHint(p) {
@@ -799,6 +872,18 @@
     return h('div', { class: 'reqs' }, reqs.map(r => h('span', { class: 'req' + (r.ok ? ' ok' : ''), text: r.label })));
   }
 
+  function routeTypes(r) {
+    const seen = {};
+    const out = [];
+    [r.encounters || [], r.night || []].forEach(tbl => tbl.forEach(row => {
+      const sp = TG.species(row.id);
+      if (!sp || sp.glitch || r.special === 'glitch_city') return;
+      if (row.id === 150 && !S().flags.champion) return;
+      (sp.types || []).forEach(t => { if (!seen[t]) { seen[t] = 1; out.push(t); } });
+    }));
+    return out.length ? 'Types: ' + out.join(' · ') : '';
+  }
+
   function renderMap() {
     const st = S();
     refs.mRoutes.innerHTML = '';
@@ -830,6 +915,7 @@
         h('div', { class: 'nm', text: UI.corrupt(r.name) + (r.special === 'pokemon_tower' && TG.isNight() ? ' ☾' : '') }),
         btn,
         h('div', { class: 'flav', text: owned || meets ? (r.flavor || '') : '' }),
+        owned ? h('div', { class: 'rtypes', text: routeTypes(r) }) : null,
         !owned && !meets ? reqChips(TG.reqStatus(r.requires).filter(x => !x.ok)) : null);
       refs.mRoutes.appendChild(row);
     }
@@ -1104,7 +1190,8 @@
     const lines = [];
     lines.push('You were away for ' + TG.fmtTime(sum.seconds) + '.' + (sum.capped ? ' (Progress capped at ' + TG.fmtTime(sum.cap) + '.)' : ''));
     if (sum.rd > 0) lines.push('Your team gathered ' + TG.fmt(sum.rd) + ' RD.');
-    if (sum.balls > 0) lines.push('+' + TG.fmtInt(sum.balls) + ' Poké Balls.');
+    if (sum.ballsUsed > 0) lines.push('Poké Balls: +' + TG.fmtInt(sum.balls) + ' gathered, ' + TG.fmtInt(sum.ballsUsed) + ' thrown.' + (S().balls < 1 ? ' The bag is empty.' : ''));
+    else if (sum.balls > 0) lines.push('+' + TG.fmtInt(sum.balls) + ' Poké Balls.');
     if (sum.catches > 0) lines.push('Caught ' + TG.fmtInt(sum.catches) + ' Pokémon' + (sum.newSpecies.length ? ', including ' + sum.newSpecies.length + ' new species!' : '.'));
     if (sum.candy > 0) lines.push('The Day Care made ' + TG.fmtInt(sum.candy) + ' candy.');
     if (sum.gb > 0) lines.push('▓' + TG.fmt(sum.gb) + ' Glitch Bytes leaked in.');
@@ -1236,12 +1323,36 @@
     }
   }
 
+  let lastUnlockSig = '', lastUnlockCheck = 0;
+  function unlockSig() {
+    const st = S();
+    let p = 0, u = 0, r = 0, g = 0;
+    for (const x of TG.data.producers || []) if (TG.producerVisible(x)) p++;
+    for (const x of TG.data.upgrades || []) if (!st.upgrades[x.id] && TG.upgradeAvailable(x)) u++;
+    if (st.tabs.map) {
+      for (const x of TG.data.routes || []) if (!st.routes[x.id] && TG.meets(x.requires)) r++;
+      for (const x of TG.data.gyms || []) { const gs = TG.gymStatus(x); if (gs && gs.meets) g++; }
+    }
+    return p + '|' + u + '|' + r + '|' + g;
+  }
+  function checkUnlocks(t) {
+    if (t - lastUnlockCheck < 1000) return;
+    lastUnlockCheck = t;
+    const sig = unlockSig();
+    if (sig === lastUnlockSig) return;
+    lastUnlockSig = sig;
+    UI.markDirty('town', 'map');
+    const g = TG.systems && TG.systems.glitch;
+    if (g && g.markDirty) g.markDirty();
+  }
+
   function onTick() {
     // the engine may run many catch-up steps in one frame: touch the DOM at most once per ~frame burst
     const t = Date.now();
     if (t - lastUiTick < 40) return;
     lastUiTick = t;
     updateHeader();
+    guard('unlocks', () => checkUnlocks(t));
     if (dirty[active]) renderTab(active);
     guard('tick', updateActive);
     const gi = UI.glitchIntensity();
@@ -1269,7 +1380,11 @@
   function bindEngine() {
     TG.on('tick', onTick);
     TG.on('log', appendLog);
-    TG.on('encounter', e => { if (e && e.type === 'spawn') syncEncounters(); });
+    TG.on('encounter', e => {
+      if (!e) return;
+      if (e.type === 'spawn') syncEncounters();
+      else if (e.type === 'shoo' || e.type === 'wander') onGone(e.type === 'shoo' ? e.res && e.res.enc : e.enc, e.type);
+    });
     TG.on('throw', onThrow);
     TG.on('catch', e => { UI.markDirty('dex'); if (e.isNew) UI.markDirty('town', 'map'); });
     TG.on('dex', () => UI.markDirty('dex', 'town', 'map'));
@@ -1277,10 +1392,27 @@
     TG.on('evolve', () => UI.markDirty('dex', 'town', 'map'));
     TG.on('buy', () => UI.markDirty('town', 'map'));
     TG.on('badge', () => { UI.markDirty(); renderBadges(); });
-    TG.on('route', () => UI.markDirty('map', 'grass', 'town', 'lab'));
+    TG.on('route', e => {
+      UI.markDirty('map', 'grass', 'town', 'lab');
+      // someone is waiting in the Lab (the Old Man) and the player hasn't been there since
+      if (e && e.type === 'unlock' && TG.oldManAvailable() && !S().flags.oldman && active !== 'lab') {
+        const b = $('.tabbtn[data-tab="lab"]');
+        if (b) b.classList.add('new');
+      }
+    });
     TG.on('flag', () => { UI.markDirty(); renderBadges(); });
     TG.on('tabs', name => updateTabs(name));
-    TG.on('event', () => { if (refs.gEvent) renderEvent(); });
+    TG.on('event', e => {
+      if (refs.gEvent) renderEvent();
+      const a = e && e.type === 'start' && e.active;
+      if (a && a.effect && a.effect.type === 'steal' && active !== 'grass') {
+        UI.toast('TEAM ROCKET is raiding your research! FIGHT them on the GRASS tab.', 4000);
+        const b = $('.tabbtn[data-tab="grass"]');
+        if (b) b.classList.add('new');
+      }
+    });
+    TG.on('noballs', () => UI.toast(S().flags.mart ? 'Out of Poké Balls! Auto-catch is waiting. Buy more in TOWN.' : 'Out of Poké Balls!', 3500));
+    TG.on('credits_done', () => { const st = S(); if (st.flags.champion && !st.flags.glitch) TG.fire('post_credits'); });
     TG.on('truck', () => UI.markDirty('grass'));
     TG.on('act', n => { document.body.dataset.act = String(n); UI.markDirty(); });
     TG.on('daynight', () => { setClass(document.body, 'night', TG.isNight()); UI.markDirty('grass', 'map'); });
@@ -1314,6 +1446,10 @@
     document.getElementById('tabbar').addEventListener('click', e => {
       const b = e.target.closest('.tabbtn');
       if (b) UI.showTab(b.dataset.tab);
+    });
+    refs.badges.addEventListener('click', () => {
+      const names = (S().badgeIds || []).map(id => TG.gym(id)).filter(g => g && g.badge).map(g => g.badge);
+      UI.toast(names.length ? names.join(' · ') : 'No badges yet. Gyms are on the MAP.', 3500);
     });
     bindSecrets();
     bindEngine();
