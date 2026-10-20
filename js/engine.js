@@ -35,6 +35,10 @@
     'It wanders off. You pretend that was the plan.'
   ];
   var BALL_PRICE = 20;
+  // Active play stays worth it all game: a tap is worth at least a slice of a second of production,
+  // and a hand-thrown catch at least a few seconds of it (auto-catch keeps the plain species value)
+  var ACTIVE_TAP_PCT = 0.02, ACTIVE_TAP_PCT_BIKE = 0.04;
+  var CATCH_SECONDS_NEW = 8, CATCH_SECONDS_DUPE = 3;
   var DEX_MILESTONES = [10, 25, 50, 100, 150, 151];
   var STORY_CLS = {
     rival: 'rival', rocket: 'rival',
@@ -410,7 +414,9 @@
 
   TG.tapPower = function () {
     var e = TG.effects;
-    var base = 1 * e.tapMult * (S.flags.bike ? 5 : 1) + e.tapAddRate * TG.rates.rd;
+    var flat = 1 * e.tapMult * (S.flags.bike ? 5 : 1);
+    var floor = (S.flags.bike ? ACTIVE_TAP_PCT_BIKE : ACTIVE_TAP_PCT) * TG.rates.rd;
+    var base = Math.max(flat, floor) + e.tapAddRate * TG.rates.rd;
     return base * (S.flags.bike ? S.combo : 1);
   };
   TG.tapEncounterChance = function () {
@@ -437,6 +443,7 @@
     S.rd = Math.max(0, S.rd - c.rd);
     S.gb = Math.max(0, S.gb - c.gb);
     S.balls = Math.max(0, S.balls - c.balls);
+    TG.emit('spend', c);
     return true;
   };
   function addRD(x) {
@@ -737,7 +744,8 @@
     return res;
   };
 
-  function registerCatch(enc, weight, silent) {
+  // manual: a catch the player threw for (gets the seconds-of-production floor)
+  function registerCatch(enc, weight, silent, manual) {
     weight = weight || 1;
     var sp = TG.species(enc.id);
     var d = S.dex[enc.id];
@@ -747,7 +755,9 @@
     d.seen = true;
     if (enc.shiny) { d.shiny = (d.shiny || 0) + 1; S.stats.shinies++; }
     if (isNew || enc.shiny) recompute();
-    var gain = num(sp && sp.baseValue, 10) * TG.mults.global * (enc.shiny ? 10 : 1) * weight;
+    var per = num(sp && sp.baseValue, 10) * TG.mults.global;
+    if (manual && !enc.evolved) per = Math.max(per, (isNew ? CATCH_SECONDS_NEW : CATCH_SECONDS_DUPE) * TG.rates.rd);
+    var gain = per * (enc.shiny ? 10 : 1) * weight;
     addRD(gain);
     // an evolution registers the new form but is not a catch: no candy refund, no catch stat
     if (!enc.evolved) {
@@ -761,7 +771,7 @@
     }
     if (isNew) { checkDexMilestones(); TG.emit('dex', { id: enc.id, caught: true }); }
     if (enc.id === 151 && !S.flags.mew) { TG.setFlag('mew'); TG.fire('mew'); recompute(); }
-    TG.emit('catch', { enc: enc, gain: gain, isNew: isNew, weight: weight, silent: !!silent });
+    TG.emit('catch', { enc: enc, gain: gain, isNew: isNew, weight: weight, silent: !!silent, manual: !!manual });
     return { gain: gain, isNew: isNew };
   }
   TG.registerCatch = registerCatch;
@@ -783,7 +793,7 @@
     var res;
     if (Math.random() < chance) {
       S.encounters.splice(i, 1);
-      var c = registerCatch(enc, 1, false);
+      var c = registerCatch(enc, 1, false, !auto);
       res = { ok: true, caught: true, enc: enc, gain: c.gain, isNew: c.isNew };
       if (!auto && TG.sfx) TG.sfx.play('catch');
     } else {
