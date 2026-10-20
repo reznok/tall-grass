@@ -301,13 +301,15 @@
     var pick = order.length >= 6 ? order[5] : owned.length >= 6 ? owned[5] : (order[order.length - 1] || owned[owned.length - 1] || null);
     // The joke only lands if the duplicated "item" actually makes Research Data. If the 6th
     // slot is a Day Care / Mart shelf, duplicate the strongest RD producer instead.
-    if (pick && !makesRd(pick)) {
+    // Same if the 6th slot is a minor contributor: pick the strongest RD producer instead.
+    if (pick) {
       var best = null, bestOut = 0;
       owned.forEach(function (id) {
         var p = TG.producer(id), out = num(p.rd, 0) * (S.producers[id] || 0);
         if (out > bestOut) { bestOut = out; best = id; }
       });
-      if (best) pick = best;
+      var pickOut = makesRd(pick) ? num(TG.producer(pick).rd, 0) * (S.producers[pick] || 0) : 0;
+      if (best && pickOut < bestOut * 0.25) pick = best;
     }
     return pick;
   }

@@ -46,10 +46,10 @@ TG.data = TG.data || {};
     },
     {
       id: "mart_shelf", name: "Poké Mart Shelf", baseCost: 12000, costMult: 1.15,
-      rd: 0, encounters: 0, balls: 0.05, candy: 0,
+      rd: 0, encounters: 0, balls: 0.12, candy: 0,
       unlock: U({ badges: 1, flags: ["mart"] }),
       flavor: "May I help you? We have exactly one item, and it is round.",
-      desc: "Restocks itself with POKé BALLS. +0.05 balls/s."
+      desc: "Restocks itself with POKé BALLS. +0.12 balls/s."
     },
     {
       id: "nursejoy", name: "Pokémon Center Nurse", baseCost: 130000, costMult: 1.15,
