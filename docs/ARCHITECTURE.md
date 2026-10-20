@@ -1,0 +1,278 @@
+# TALL GRASS — Architecture & Data Contracts
+
+This is the binding contract between the engine and the data files. Several agents build in parallel against it. **Do not deviate from the schemas; if something is missing, add an optional field and document it here.**
+
+## Tech rules
+
+- Vanilla HTML/CSS/JS. **No build step, no npm, no ES modules** (must work from `file://`). Plain `<script>` tags in `index.html`, in the order listed below.
+- One global namespace: `window.TG = window.TG || {}`. Every file attaches to it. Data files attach under `TG.data.*` and `TG.sprites`.
+- Modern browser JS is fine (ES2020: optional chaining, `??`, classes, arrow functions). No TypeScript.
+- Mobile-first: touch targets ≥ 44px, `touch-action: manipulation`, no hover-only affordances, `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`.
+- No external network dependencies required to play. Google Fonts allowed only with a local fallback.
+
+## File ownership
+
+| File | Owner | Purpose |
+|---|---|---|
+| `index.html` | engine | shell, script order, tab skeleton |
+| `manifest.json`, `sw.js`, `icon.svg` | engine | PWA install/offline |
+| `css/style.css` | engine | all styling, palettes, responsive, glitch effects |
+| `js/numbers.js` | engine | `TG.fmt(n)`, `TG.fmtRate(n)` |
+| `js/sprite.js` | engine | `TG.drawSprite(canvas, id, opts)` renders 16×16 grids |
+| `js/audio.js` | engine | `TG.sfx.play('tap'|'catch'|'miss'|'buy'|'badge'|'glitch'|'evolve'|'shiny')` |
+| `js/engine.js` | engine | state, loop, save/load, offline, effects, event bus |
+| `js/ui.js` | engine | all DOM rendering |
+| `js/main.js` | engine | boot |
+| `js/systems/glitch.js`, `js/systems/sram.js` | late-game agent | Acts 3–4 (built after core works) |
+| `js/data/pokemon.js` | content | `TG.data.pokemon` (151 species metadata) |
+| `js/data/routes.js` | content | `TG.data.routes` |
+| `js/data/producers.js` | content | `TG.data.producers` |
+| `js/data/upgrades.js` | content | `TG.data.upgrades` |
+| `js/data/gyms.js` | content | `TG.data.gyms` (8 gyms + Elite Four + Champion) |
+| `js/data/story.js` | content | `TG.data.story` (log lines keyed by trigger) + `TG.data.events` |
+| `js/data/sprites_a.js` | sprites agent A | `TG.sprites[1..50]` |
+| `js/data/sprites_b.js` | sprites agent B | `TG.sprites[51..100]` |
+| `js/data/sprites_c.js` | sprites agent C | `TG.sprites[101..151]` + `TG.sprites.unknown`, `TG.sprites.truck`, `TG.sprites.oak`, `TG.sprites.ball`, `TG.sprites.missingno` |
+
+Script order in `index.html`:
+```
+numbers.js, sprite.js, audio.js,
+data/sprites_a.js, data/sprites_b.js, data/sprites_c.js,
+data/pokemon.js, data/routes.js, data/producers.js, data/upgrades.js, data/gyms.js, data/story.js,
+engine.js, systems/glitch.js, systems/sram.js, ui.js, main.js
+```
+(`systems/*.js` may be absent in phase 1; engine must not crash if `TG.systems` is undefined.)
+
+---
+
+## Sprite format
+
+`TG.sprites[key]` = array of **16 strings of 16 chars**. Chars:
+- `.` transparent
+- `1` lightest shade
+- `2` mid shade
+- `3` darkest shade (outline)
+
+Example (a ball):
+```js
+TG.sprites.ball = [
+"................",
+"......3333......",
+"....33111133....",
+"...3111111113...",
+"..311111111113..",
+"..311111111113..",
+".31111111111113.",
+".33333333333333.",
+".33333223333333.",
+".32222232222223.",
+"..322223222223..",
+"..322222222223..",
+"...3222222223...",
+"....33222233....",
+"......3333......",
+"................",
+];
+```
+Sprites must be **original art** drawn for this project: recognizable silhouettes in the spirit of Gen 1, not copies. Face right or front. Use `3` for outlines, `2` for shading, `1` for highlights/body. Keep 1–2 px margin where possible.
+
+Renderer: `TG.drawSprite(canvasEl, key, {scale=3, palette='dmg'|'shiny'|'glitch'|'silhouette', corrupt=0..1})`. Palette shades map to CSS variables `--c0..--c3`.
+
+---
+
+## Data schemas
+
+All ids are lowercase snake_case strings unless noted. All numbers are plain JS numbers.
+
+### Pokémon — `TG.data.pokemon` (array, index order = dex order, 151 entries)
+```js
+{
+  id: 25,                 // dex number 1..151
+  name: "Pikachu",
+  types: ["Electric"],    // 1 or 2 of: Normal Fire Water Grass Electric Ice Fighting Poison Ground Flying Psychic Bug Rock Ghost Dragon
+  family: "pichu_line",   // shared by all members of an evolution family; candy is per family. Use the base form's lowercase name, e.g. "pikachu"
+  stage: 1,               // 1 base, 2 first evo, 3 second evo
+  evolvesTo: 26,          // id or null
+  candyToEvolve: 50,      // candy needed for THIS species to evolve into evolvesTo; null if none. Typical: 12/25/50/100/400 (Magikarp)
+  rarity: 2,              // 1 common, 2 uncommon, 3 rare, 4 very rare, 5 legendary
+  catchRate: 0.55,        // 0..1 base chance per ball
+  baseValue: 60,          // RD granted on catch before multipliers. Scale with rarity and dex position (roughly 10 × 1.06^id × rarityMult)
+  entry: "When several of these POKéMON gather, their electricity could build and cause lightning storms.", // short dex flavor, ORIGINAL text, not copied from the games
+  legendary: false
+}
+```
+Fossils (138–142), legendaries (144–146, 150), Mew (151) have `rarity: 4|5` and appear only via special sources (see routes `special`).
+
+### Routes — `TG.data.routes` (array, unlock order)
+```js
+{
+  id: "route1",
+  name: "Route 1",
+  act: 1,                        // 1..4
+  cost: 50,                      // RD to unlock (0 for the starting area "pallet")
+  requires: { badges: 0, routes: ["pallet"], flags: [] },  // flags: engine flags like "oldman", "pokeflute", "strength"
+  encounters: [ { id: 16, weight: 55 }, { id: 19, weight: 45 } ],
+  night: [ { id: 41, weight: 100 } ],   // optional: replaces encounters at night (real clock 20:00–06:00)
+  encounterRateMult: 1.0,        // optional
+  flavor: "Tall grass sways between Pallet and Viridian.",
+  special: null                  // or "truck" | "coast" | "glitch_city" | "cerulean_cave" | "cinnabar_lab" | "pokemon_tower" — engine hooks
+}
+```
+Water routes need `flags: ["surf"]`, Cut routes `flags: ["cut"]`. Route 12 needs `flags: ["pokeflute"]`. The "coast" route needs `["surf","champion"]` and the engine only spawns MissingNo. there if flag `oldman` is set.
+
+### Producers — `TG.data.producers` (array, unlock order)
+```js
+{
+  id: "bugcatcher",
+  name: "Bug Catcher",
+  baseCost: 15,
+  costMult: 1.15,
+  rd: 0.1,                // RD/sec per unit (may be 0)
+  encounters: 0,          // encounters/sec per unit (may be 0)
+  balls: 0,               // Poké Balls/sec per unit
+  candy: 0,               // candy/sec per unit, distributed round-robin across owned families
+  unlock: { badges: 0, routes: ["route1"], producers: {}, rdTotal: 0 },  // visible when met; producers: {id: minOwned}
+  flavor: "I like shorts! They're comfy and easy to wear!",
+  desc: "Catches bugs. Writes it down."
+}
+```
+
+### Upgrades — `TG.data.upgrades` (array)
+```js
+{
+  id: "bugnet_1",
+  name: "Bug Net",
+  cost: 200,                       // RD (or { gb: 50 } for Glitch Bytes in Act 3 — engine supports cost as number OR {rd, gb, balls})
+  requires: { producers: { bugcatcher: 10 }, badges: 0, flags: [], upgrades: [], dexCount: 0 },
+  effect: { type: "producerMult", target: "bugcatcher", value: 2 },
+  flavor: "Twice the bugs. Twice the comfy.",
+  desc: "Bug Catchers produce ×2."
+}
+```
+Effect types the engine implements (use only these):
+- `producerMult` {target, value} — multiply a producer's output
+- `allProducerMult` {value}
+- `tapMult` {value} — tap power ×value
+- `tapAddRate` {value} — tap also grants value × (RD/sec) per tap (Cookie Clicker "cursor" style)
+- `encounterMult` {value}
+- `catchRateMult` {value}
+- `ballCost` {value} — multiplier on ball price (0.8 = 20% cheaper)
+- `dexBonusMult` {value} — multiply the Pokédex % bonus
+- `candyMult` {value}
+- `offlineCap` {value: seconds}, `offlineMult` {value}
+- `autoCatch` {value: throws per second}
+- `flag` {value: "flagname"} — sets a flag (e.g. "pokeflute", "bike")
+- `encounterQueue` {value: +slots}
+- `glitchMult`, `instabilityDecay` (Act 3; engine stores them, late-game agent consumes)
+
+### Gyms — `TG.data.gyms` (array, order)
+```js
+{
+  id: "pewter",
+  name: "Pewter Gym",
+  leader: "Brock",
+  badge: "Boulder Badge",
+  badgeIndex: 1,                 // 1..8; Elite Four are 9..12 (badge: null), Champion 13
+  cost: 2500,                    // RD
+  requires: { dexCount: 8, types: { Water: 1, Grass: 1 }, routes: ["viridian_forest"], badges: 0, flags: [] }, // types: at least N registered species with that type
+  quote: "I took you for granted.",   // ORIGINAL line in the leader's voice, not copied
+  reward: { flags: ["mart"], globalMult: 1.25, unlockTabs: ["town"] , log: "Brock hands you the BOULDER BADGE." },
+  spriteKey: null                // optional sprite
+}
+```
+Flags that badges set (engine reads them): `mart`, `daycare`, `bike`, `cut`, `surf`, `fly`, `strength`, `lab_cinnabar`, `victory_road`, `champion`.
+
+### Story & events — `TG.data.story`, `TG.data.events`
+```js
+TG.data.story = {
+  // trigger key -> array of lines (shown in order; each shown once). Engine fires triggers by name.
+  start: ["Your name is... whatever you typed in. Prof. OAK has a task for you.", "..."],
+  first_tap: ["..."],
+  first_catch: ["..."],
+  first_producer: ["..."],
+  route_unlock: { route1: ["..."], viridian: ["..."] },    // per-route
+  badge: { pewter: ["..."], cerulean: ["..."] },           // per-gym
+  dex_10: [...], dex_25: [...], dex_50: [...], dex_100: [...], dex_150: [...], dex_151: [...],
+  oldman: ["..."],                                         // the Old Man dialogue (Lab tab action)
+  truck_found: [...], truck_moved: [...], mew: [...],
+  champion: [...], credits: ["TALL GRASS", "...", "THE END"],
+  night: [...], shiny: [...],
+  rival: ["taunt 1", "taunt 2", ...],                       // random pick
+  rocket: ["..."],
+  idle_lines: ["random ambient flavor lines", ...],          // shown occasionally
+  glitch_first: [...], missingno_caught: [...], glitch_whisper: [...],  // Act 3, someone else writes in the log
+  sram_appear: [...], battery_low: [...], battery_dead: [...], prestige_done: [...],
+  ending: [...]
+};
+TG.data.events = [
+  { id: "rival", weight: 10, minAct: 1, duration: 0, text: "{rival}",   // {rival} => random story.rival line
+    effect: { type: "none" } },
+  { id: "rocket_raid", weight: 5, minAct: 2, duration: 60, text: "TEAM ROCKET is stealing your research!",
+    effect: { type: "steal", pct: 0.1, counter: "fight", counterLabel: "FIGHT!" } },
+  { id: "lucky_egg", weight: 4, minAct: 1, duration: 30, text: "A LUCKY EGG rolls by.", effect: { type: "rdMult", value: 7 } },
+  { id: "zubat_swarm", weight: 6, minAct: 2, night: true, duration: 20, text: "Zubat. Zubat. ZUBAT.", effect: { type: "encounterMult", value: 10, forceSpecies: 41 } }
+];
+```
+Event effect types: `none`, `steal` (counterable by tapping a button), `rdMult`, `encounterMult` (optional `forceSpecies`), `freeBalls` {count}, `candyRain` {count}.
+
+---
+
+## Engine API (what ui.js, systems and data may rely on)
+
+```js
+TG.state            // the live save state (see below)
+TG.rates            // computed per tick: { rd, encounters, balls, candy, gb }
+TG.on(event, fn)    // event bus: 'tick', 'catch', 'buy', 'badge', 'route', 'log', 'act', 'event', 'glitch', 'prestige', 'save', 'load'
+TG.emit(event, payload)
+TG.log(text, cls)   // push to story log (cls: 'oak'|'sys'|'glitch'|'rival')
+TG.fire(triggerName, subkey) // show story lines for a trigger once
+TG.flag(name) / TG.setFlag(name)
+TG.canAfford(cost) / TG.spend(cost)
+TG.buyProducer(id, n=1) / TG.buyUpgrade(id) / TG.unlockRoute(id) / TG.challengeGym(id)
+TG.tap() / TG.throwBall(encounterIndex) / TG.evolve(speciesId)
+TG.save() / TG.load() / TG.exportSave() / TG.importSave(str) / TG.hardReset()
+TG.act                // 1..4 current act
+TG.prestige()         // Act 4 (stub in phase 1)
+TG.isNight()          // 20:00–06:00 local
+```
+
+### State shape (`TG.state`)
+```js
+{
+  v: 1, name: "RED", createdAt, lastSave, lastTick,
+  rd, rdTotal, rdLifetime,     // lifetime persists across prestige
+  balls, gb, instability,
+  taps, combo,
+  producers: { bugcatcher: 3, ... },
+  upgrades: { bugnet_1: true },
+  routes: { pallet: true, route1: true }, currentRoute: "route1",
+  dex: { 25: { caught: 4, shiny: 0, seen: true } },   // keyed by id
+  candy: { pikachu: 12 },
+  badges: 1, badgeIds: ["pewter"], elite: 0, champion: false,
+  flags: { mart: true },
+  encounters: [ { id: 16, shiny: false, misses: 0 } ],
+  storyShown: { start: 2 },        // trigger -> lines shown count
+  log: [ { t, text, cls } ],       // last 100
+  activeEvent: null,
+  truckTaps: 0, titleTaps: 0,
+  act: 1,
+  prestige: { count: 0, rareCandy: 0 },
+  settings: { sound: false, palette: "dmg", reduceMotion: false },
+  stats: { catches, shinies, evolutions, playtime }
+}
+```
+
+### Multiplier stack (engine computes in this order)
+`rd/sec = Σ(producer.rd × owned × producerMult) × allProducerMult × dexBonus × badgeMult × rareCandyMult × eventMult × glitchMult`
+`dexBonus = 1 + (Σ species bonuses) × dexBonusMult` where species bonus = 0.02 (stage1) / 0.05 (stage2) / 0.10 (stage3), ×2 if shiny registered.
+`badgeMult = Π gym.reward.globalMult`. `rareCandyMult = 1.1^rareCandy`.
+Tap = `1 × tapMult × (bike ? 5 : 1) + tapAddRate × rd/sec`.
+
+---
+
+## UI conventions
+
+- Tabs in `index.html`: `#tab-grass #tab-dex #tab-town #tab-map #tab-lab #tab-glitch #tab-sram`, each a `<section class="tab">`. Tab bar buttons `.tabbtn[data-tab]`. Hidden tabs have `hidden` attribute.
+- ui.js renders by diffing minimal text; never rebuild the whole DOM every tick (mobile perf). Full re-render only on structural events (buy/unlock/badge); per-tick update only numbers/bars.
+- Palette via CSS variables on `:root` / `body[data-palette="dmg"|"gbc"|"glitch"]`.
+- Glitch effects are CSS classes toggled by `js/systems/glitch.js`: `body.glitch-1 .. glitch-3`, text corruption is done by ui.js reading `TG.state.instability` (if `TG.systems?.glitch` exists).
