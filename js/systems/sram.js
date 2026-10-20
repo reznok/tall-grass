@@ -264,11 +264,13 @@
       ov.hidden = true;
       ov.innerHTML = '';
       ov.classList.remove('ending');
-      ov.onpointerdown = null;
+      ov.onpointerdown = ov.onclick = null;
       endingOpen = false;
       TG.emit('credits_done');
     };
-    ov.onpointerdown = function (e) { e.preventDefault(); if (now() - startedAt > 2500) close(); };
+    // close on click (not pointerdown) so the tap can't fall through to the page underneath
+    ov.onpointerdown = function (e) { e.preventDefault(); };
+    ov.onclick = function () { if (now() - startedAt > 2500) close(); };
     ov.hidden = false;
     sfx('evolve');
   }

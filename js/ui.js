@@ -1114,6 +1114,7 @@
     ov.appendChild(h('div', { class: 'skip', text: 'TAP TO SKIP' }));
     const finish = () => {
       if (ov.hidden) return;
+      ov.onpointerdown = ov.onclick = null;
       ov.hidden = true;
       ov.innerHTML = '';
       setClass(ov, 'static', false);
@@ -1126,7 +1127,10 @@
       roll.style.animationDuration = dur + 's';
       roll.addEventListener('animationend', finish);
     }
-    ov.onpointerdown = (e) => { e.preventDefault(); finish(); };
+    // close on click, not pointerdown: hiding the overlay on pointerdown let the tap's click land
+    // on whatever button was underneath (e.g. a route's GO on the Map tab)
+    ov.onpointerdown = (e) => { e.preventDefault(); };
+    ov.onclick = finish;
     ov.hidden = false;
   };
 
