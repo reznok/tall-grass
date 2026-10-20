@@ -4,15 +4,33 @@
  */
 
 /* ------------------------------------------------------------ palettes */
-:root, body[data-palette="dmg"] {
+/* Default: Gen 3 / Hoenn (GBA) look — white text boxes, blue window frames, navy text, vivid grass. */
+:root, body[data-palette="rse"] {
+  --c0: #f8f8f8;
+  --c1: #b8d8f8;
+  --c2: #3870c8;
+  --c3: #283860;
+  --bg: linear-gradient(180deg, #58a8e8 0%, #78c0f0 60%, #88c888 100%);
+  --bg-solid: #68b8e8;
+  --grass: #60c058;
+  --accent: #e03c3c;
+  --shine: #f8d048;
+}
+body[data-palette="dmg"] {
   --c0: #9bbc0f;
   --c1: #8bac0f;
   --c2: #306230;
   --c3: #0f380f;
+  --bg: #8bac0f;
+  --bg-solid: #8bac0f;
+  --grass: #9bbc0f;
   --accent: #306230;
   --shine: #e8a838;
 }
 body[data-palette="gbc"] {
+  --bg: #f8b070;
+  --bg-solid: #f8b070;
+  --grass: #fff8e8;
   --c0: #fff8e8;
   --c1: #f8b070;
   --c2: #a84820;
@@ -21,6 +39,9 @@ body[data-palette="gbc"] {
   --shine: #f0c020;
 }
 body[data-palette="glitch"] {
+  --bg: #14061c;
+  --bg-solid: #14061c;
+  --grass: #14061c;
   --c0: #14061c;
   --c1: #3a1f5d;
   --c2: #c43a8a;
@@ -46,7 +67,9 @@ body[data-palette="glitch"] {
 html, body { margin: 0; padding: 0; height: 100%; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
-  background: var(--c1);
+  background: var(--bg, var(--c1));
+  background-attachment: fixed;
+  background-color: var(--bg-solid, var(--c1));
   color: var(--c3);
   font-family: var(--font-mono);
   font-size: 14px;
@@ -240,7 +263,7 @@ a { color: var(--c2); }
   height: clamp(260px, 46vh, 460px);
   border: 2px solid var(--c3);
   border-radius: 4px;
-  background-color: var(--c0);
+  background-color: var(--grass, var(--c0));
   background-size: 48px 48px;
   overflow: hidden;
   touch-action: manipulation;

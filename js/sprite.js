@@ -72,9 +72,90 @@
     return [Math.round(a[0] + (b[0] - a[0]) * t), Math.round(a[1] + (b[1] - a[1]) * t), Math.round(a[2] + (b[2] - a[2]) * t)];
   }
 
+  // ---- full-colour mode (Gen 3 look): sprites are tinted by primary type, named sprites by key.
+  // Each ramp is [light '1', mid '2', dark '3'].
+  var TYPE_RAMPS = {
+    Normal:   ['#e8d8b8', '#a89070', '#403020'],
+    Fire:     ['#f8a048', '#d84820', '#481808'],
+    Water:    ['#68b0f8', '#2860c0', '#102858'],
+    Grass:    ['#88d858', '#389038', '#184018'],
+    Electric: ['#f8e048', '#d8a010', '#504008'],
+    Ice:      ['#b8f0f8', '#58b8d8', '#204858'],
+    Fighting: ['#e0a070', '#b04828', '#402010'],
+    Poison:   ['#c080e0', '#8038a8', '#301048'],
+    Ground:   ['#e8c878', '#b08838', '#403010'],
+    Flying:   ['#c8b8f0', '#8878c8', '#302858'],
+    Psychic:  ['#f898c0', '#d83878', '#501028'],
+    Bug:      ['#c8d858', '#789028', '#303810'],
+    Rock:     ['#d0c098', '#907850', '#382c18'],
+    Ghost:    ['#9888c8', '#584898', '#201838'],
+    Dragon:   ['#8890f8', '#4040c8', '#181858']
+  };
+  var KEY_RAMPS = {
+    ball:      ['#f8f8f8', '#e03838', '#302020'],
+    unknown:   ['#e8e8f0', '#8898b8', '#283860'],
+    truck:     ['#d8e0e8', '#4878a8', '#202838'],
+    oak:       ['#f8f0e8', '#a07858', '#382818'],
+    oldman:    ['#f0e0d0', '#8870a0', '#302030'],
+    rival:     ['#f8e8d8', '#a05828', '#301810'],
+    rocket:    ['#e8e8e8', '#484858', '#101018'],
+    missingno: ['#f8f8f8', '#9898a8', '#202030'],
+    egg:       ['#f8f8e8', '#a8c878', '#405028'],
+    candy:     ['#f8e8f8', '#d848a8', '#502040'],
+    badge:     ['#f8e878', '#c89828', '#504010'],
+    battery:   ['#e8e8e8', '#8898a8', '#283040'],
+    cartridge: ['#c0c0c8', '#7080a0', '#283048']
+  };
+  var GRASS_RAMP = ['#78d070', '#48a848', '#308838'];
+
+  function colorMode() {
+    var p = document.body && document.body.dataset ? document.body.dataset.palette : '';
+    return p === 'rse' || p === 'gbc';
+  }
+
+  function hexRamp(r) { return { '1': parseColor(r[0]), '2': parseColor(r[1]), '3': parseColor(r[2]) }; }
+
+  // hue-rotate an [r,g,b] by deg — used for shiny variants in colour mode
+  function hueRotate(rgb, deg) {
+    var r = rgb[0] / 255, g = rgb[1] / 255, b = rgb[2] / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, h = 0, s = 0, d = mx - mn;
+    if (d) {
+      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      if (mx === r) h = (g - b) / d + (g < b ? 6 : 0); else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    h = (h + deg / 360) % 1;
+    function f(p, q, t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; }
+    var q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    return [Math.round(f(p, q, h + 1 / 3) * 255), Math.round(f(p, q, h) * 255), Math.round(f(p, q, h - 1 / 3) * 255)];
+  }
+
+  // ramp for a sprite key in colour mode, or null to fall back to the 4-shade palette
+  function rampFor(key) {
+    if (key === null || key === undefined) return null;
+    if (KEY_RAMPS[key]) return KEY_RAMPS[key];
+    var id = +key;
+    if (id > 0 && TG.data && TG.data.pokemon) {
+      var sp = TG.data.pokemon[id - 1];
+      if (sp && sp.id !== id) sp = TG.data.pokemon.find(function (x) { return x.id === id; });
+      var t = sp && sp.types && sp.types[0];
+      if (t && TYPE_RAMPS[t]) return TYPE_RAMPS[t];
+    }
+    return null;
+  }
+
   // shade char -> [r,g,b]
-  function shadeMap(palette) {
+  function shadeMap(palette, key) {
     var c = baseColors();
+    if (colorMode()) {
+      if (palette === 'light') return hexRamp(GRASS_RAMP);
+      var ramp = rampFor(key);
+      if (ramp && palette !== 'silhouette' && palette !== 'glitch') {
+        var m = hexRamp(ramp);
+        if (palette === 'shiny') return { '1': hueRotate(m['1'], 150), '2': hueRotate(m['2'], 150), '3': m['3'] };
+        return m;
+      }
+    }
     switch (palette) {
       case 'silhouette': return { '1': c[3], '2': c[3], '3': c[3] };
       // shiny: shades 1 and 2 swap, both tinted warm
@@ -101,8 +182,8 @@
     return c;
   }
 
-  function renderTile(grid, palette, corrupt) {
-    var map = shadeMap(palette);
+  function renderTile(grid, palette, corrupt, key) {
+    var map = shadeMap(palette, key);
     var cv = makeCanvas(16, 16);
     var ctx = cv.getContext('2d');
     var img = ctx.createImageData(16, 16);
@@ -133,10 +214,10 @@
     var grid = getGrid(keyOrGrid);
     var key = Array.isArray(keyOrGrid) ? null : String(keyOrGrid);
     if (!grid) { grid = QMARK; key = '__qmark'; if (palette === 'silhouette') palette = 'dmg'; }
-    if (corrupt > 0 || key === null) return renderTile(grid, palette, corrupt || 0);
-    var ck = key + '|' + palette;
+    if (corrupt > 0 || key === null) return renderTile(grid, palette, corrupt || 0, key);
+    var ck = key + '|' + palette + '|' + (colorMode() ? 'c' : 'm');
     var t = tileCache[ck];
-    if (!t) t = tileCache[ck] = renderTile(grid, palette, 0);
+    if (!t) t = tileCache[ck] = renderTile(grid, palette, 0, key);
     return t;
   }
 

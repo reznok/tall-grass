@@ -134,7 +134,7 @@
       truckTaps: 0, titleTaps: 0,
       act: 1,
       prestige: { count: 0, rareCandy: 0 },
-      settings: { sound: false, palette: 'dmg', reduceMotion: false, tab: 'grass', buyAmt: 1 },
+      settings: { sound: false, palette: 'rse', reduceMotion: false, tab: 'grass', buyAmt: 1 },
       stats: { catches: 0, shinies: 0, evolutions: 0, playtime: 0, ballsThrown: 0, eventsSeen: 0, fled: 0 },
       // ---- engine additions (documented in ARCHITECTURE.md "Engine additions")
       tabs: { grass: true, dex: true, lab: true },

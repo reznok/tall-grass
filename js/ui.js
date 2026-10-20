@@ -917,15 +917,14 @@
     setText(refs.lMotion, st.settings.reduceMotion ? 'ON' : 'OFF');
     setClass(refs.lMotion, 'on', st.settings.reduceMotion);
     if (document.activeElement !== refs.lName) refs.lName.value = st.name || 'RED';
-    const opts = [['dmg', 'DMG GREEN']];
-    if (st.flags.gbc || st.settings.palette === 'gbc') opts.push(['gbc', 'COLOR']);
+    const opts = [['rse', 'HOENN'], ['gbc', 'GBC'], ['dmg', 'DMG GREEN']];
     const sig = opts.map(o => o[0]).join(',');
     if (refs.lPal._sig !== sig) {
       refs.lPal._sig = sig;
       refs.lPal.innerHTML = '';
       opts.forEach(([v, l]) => refs.lPal.appendChild(h('option', { value: v, text: l })));
     }
-    refs.lPal.value = opts.some(o => o[0] === st.settings.palette) ? st.settings.palette : 'dmg';
+    refs.lPal.value = opts.some(o => o[0] === st.settings.palette) ? st.settings.palette : 'rse';
     refs.lPal.disabled = opts.length < 2;
   }
 
@@ -967,14 +966,14 @@
   // ------------------------------------------------------------ settings / palette
   UI.setPalette = function (p) {
     const st = S();
-    if (p === 'gbc' && !st.flags.gbc && st.settings.palette !== 'gbc') p = 'dmg';
+    if (!['rse', 'gbc', 'dmg'].includes(p)) p = 'rse';
     st.settings.palette = p;
     applySettings();
   };
 
   function applySettings() {
     const st = S();
-    const pal = st.settings.palette || 'dmg';
+    const pal = st.settings.palette || 'rse';
     if (document.body.dataset.palette !== pal && !document.body.dataset.paletteLock) document.body.dataset.palette = pal;
     setClass(document.body, 'reduce-motion', !!st.settings.reduceMotion);
     setClass(document.body, 'night', TG.isNight());
