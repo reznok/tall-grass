@@ -396,7 +396,7 @@ Rule: there should always be something the player could be doing; progress is ne
 
 **Engine**
 - Tap floor: `TG.tapPower() = (max(flat, pct × rd/sec) + tapAddRate × rd/sec) × combo`, `pct` = 0.02 (0.04 with the bike). `flat` is the old `tapMult × (bike ? 5 : 1)`.
-- Catch value: a new species pays `baseValue × global`; a repeat catch pays 30% of that (`DUPE_VALUE`) — candy is the point of dupes. A hand-thrown catch additionally has a floor of `s × rd/sec` with `s` = 8 (new) / 3 (dupe); auto-catch, offline and evolution get the plain value with no floor. `registerCatch(enc, weight, silent, manual)`; the `catch` event carries `manual`.
+- Catch floor: a hand-thrown catch pays `max(baseValue × global, s × rd/sec)` with `s` = 8 (new species) / 3 (dupe); auto-catch, offline and evolution keep the plain species value. `registerCatch(enc, weight, silent, manual)`; the `catch` event carries `manual`.
 - `TG.spend` emits `spend` (`{rd, gb, balls}`). Auto-catch running dry emits `noballs` (and logs `story.auto_noballs`, at most every 3 min).
 - New story triggers: `first_encounter`, `town_open`, `map_open`, `post_credits` (fired by ui.js on `credits_done` while Act 3 has not started), `battery_warn`, `instability_warn`, `auto_noballs` (random), `request_new/_done` and `request_new_glitch/_done_glitch` (random).
 
