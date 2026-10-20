@@ -386,3 +386,19 @@ Acts 3–4, prestige and the ending live in `js/systems/glitch.js`, `js/systems/
 **UI hooks (ui.js)**: `#g-gags` strip under the grass, `#t-shop` box in Town (both owned by gags.js), elements with `[data-gag]` inside `#grass` are not grass taps, `TG.ui.setNameOverride(text|null)`, events `route_denied` `{id, meets}` (Map unlock refused) and `rename` `{from, to}` (Lab name change). `#g-ballcount` is the tappable Poké Ball counter.
 
 **Dev**: `TG.dev.event(id)` (alias of `TG.startEvent`), `TG.dev.gag(name)` with `salesman | karp n | ledge | joey | mom | leak | snorlax | oak | bike | bikeRefund | motto | nurse | ditto | psyduck`.
+
+---
+
+## Active-play additions
+
+Rule: there should always be something the player could be doing; progress is never gated purely by time.
+
+**Engine**
+- Tap floor: `TG.tapPower() = (max(flat, pct × rd/sec) + tapAddRate × rd/sec) × combo`, `pct` = 0.02 (0.04 with the bike). `flat` is the old `tapMult × (bike ? 5 : 1)`.
+- Catch floor: a hand-thrown catch pays `max(baseValue × global, s × rd/sec)` with `s` = 8 (new species) / 3 (dupe); auto-catch, offline and evolution keep the plain species value. `registerCatch(enc, weight, silent, manual)`; the `catch` event carries `manual`.
+- `TG.spend` emits `spend` (`{rd, gb, balls}`). Auto-catch running dry emits `noballs` (and logs `story.auto_noballs`, at most every 3 min).
+- New story triggers: `first_encounter`, `town_open`, `map_open`, `post_credits` (fired by ui.js on `credits_done` while Act 3 has not started), `battery_warn`, `instability_warn`, `auto_noballs` (random), `request_new/_done` and `request_new_glitch/_done_glitch` (random).
+
+**OAK'S REQUESTS** (`js/systems/requests.js`, loaded after `systems/gags.js`): exactly one active request in `state.request` `{kind, key, goal, progress, text, voice: 'oak'|'glitch', reward: {type: 'rd'|'balls'|'candy'|'gb', amount, family?, frag?}, uid}`; `state.requestSkipAt` (ms, 2-minute skip cooldown); `stats.requests` (completed, shown on the Trainer Card) and `stats.rcFragments` (cosmetic). Kinds: `catch_type, catch_species, buy_producer, evolve, unlock_route, tap, throw, new_species, spend` — each generated only when reachable (owned routes, visible producers, unlocked tabs). Act 3+: 30% come from the other voice and pay ▓. Card `#g-req` sits under the Grass stats row. API `TG.systems.requests.{current, complete, skip, generate}`.
+
+**UI**: Town producer rows, Map route/gym rows (requirements met, not affordable) and the next-helper teaser (when only RD earned is missing) show a thin saving-up bar (`.bar.prog`).

@@ -589,6 +589,50 @@ TG.data.story = {
     name_missingno_glitch: ["thats mine give it back"]
   },
 
+  // OAK'S REQUESTS (js/systems/requests.js): one line when a request is posted, one when it is done
+  request_new: [
+    "OAK: A small favour. It is written on a card. I have lost the card, so I'll tell you.",
+    "OAK: Research is mostly errands. Here is an errand.",
+    "OAK: I wouldn't ask if it weren't important. It is moderately important.",
+    "OAK: My aides are busy. By busy I mean asleep. Could you do something for me?",
+    "OAK: New request on the board. The board is a door. I pin things to the door.",
+    "OAK: This one is for science. They are all for science. Some are also for me.",
+    "OAK: A colleague in another region asked for this. I said you'd do it. You're welcome.",
+    "OAK: I've prepared a task for you. Preparing it was most of my morning.",
+    "OAK: You look like someone with a free afternoon. Here.",
+    "OAK: Another request. I find it helps if you don't think about how many there will be.",
+    "OAK: This one came in the mail. It had no return address. I'm treating it as a sign.",
+    "OAK: If you finish this, I'll be very slightly impressed. Out loud, even."
+  ],
+  request_done: [
+    "OAK: Done already? Splendid. I'll write it down in the big book.",
+    "OAK: Excellent work. There is a reward. I put it where you'd find it.",
+    "OAK: Request complete. My aides will pretend they helped.",
+    "OAK: Well done! That's going on the fridge. The lab has a fridge now.",
+    "OAK: Thank you. I'll take the credit at the next conference, but I'll mention you.",
+    "OAK: Finished. You make it look easy. Please stop, it's bad for morale.",
+    "OAK: Marvellous. You've earned this. Don't spend it all on POKé BALLS. Or do.",
+    "OAK: That'll do nicely. I've already thought of another one. Sorry.",
+    "OAK: Request complete. The door has one less card on it. The door looks lighter.",
+    "OAK: Good! When I was your age I'd have taken twice as long and blamed the weather.",
+    "OAK: Perfect. Science advances by one small, very specific step.",
+    "OAK: Done. I've stamped it. The stamp says DONE. I had it made."
+  ],
+  request_new_glitch: [
+    "i want something too",
+    "do this for me",
+    "oak isnt the only one who can ask",
+    "please",
+    "its a small thing it wont hurt much"
+  ],
+  request_done_glitch: [
+    "thank you",
+    "that felt warm",
+    "you are kind to things that arent real",
+    "i put something in your bag",
+    "again soon"
+  ],
+
   act: {
     2: [
       "OAK: A badge already? Then it's time. The whole region is waiting for you.",
@@ -724,7 +768,7 @@ TG.data.storyCls = function (trigger, line) {
   if (typeof line !== "string") return "sys";
   if (/^OAK: /.test(line)) return "oak";
   if (/^BLUE: /.test(line) || trigger === "rival") return "rival";
-  var act34 = { glitch_first: 1, missingno_caught: 1, glitch_whisper: 1, hall_of_fame: 1, instability_crash: 1, instability_warn: 1,
+  var act34 = { request_new_glitch: 1, request_done_glitch: 1, glitch_first: 1, missingno_caught: 1, glitch_whisper: 1, hall_of_fame: 1, instability_crash: 1, instability_warn: 1,
     sram_appear: 1, battery_low: 1, battery_dead: 1, prestige_done: 1, debug_menu: 1, dex_0: 1, glitch_city: 1,
     gags: 1 };
   if (act34[trigger] && line === line.toLowerCase() && !/[.!?,]/.test(line)) return "glitch";

@@ -752,3 +752,19 @@ body.reduce-motion .credits.ending .eln { transition: none; }
 .tabbtn.gag-dizzy { animation: wobble .5s steps(3) 4; }
 .gag-shop-text { margin: 0 0 8px; }
 @media (prefers-reduced-motion: reduce) { .gag-chip, .ledge, .hdr-name.gag-ditto, .tabbtn.gag-dizzy { animation: none !important; } }
+
+/* ------------------------------------------------------------ saving-up bars (Town / Map) */
+.prod > .bar.prog, .route > .bar.prog, .gym > .bar.prog { grid-column: 1 / -1; flex: none; height: 6px; border-width: 1px; margin-top: 4px; }
+.bar.prog > i { background: var(--c3); opacity: .55; }
+
+/* ------------------------------------------------------------ OAK'S REQUESTS (js/systems/requests.js) */
+.req-card { padding: 8px 12px; }
+.req-card .req-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.req-card .req-from { font-family: var(--font-px); font-size: 8px; letter-spacing: .5px; }
+.req-card .req-reward { font-size: 12px; font-weight: bold; }
+.req-card .req-text { font-weight: bold; margin: 2px 0 4px; overflow-wrap: anywhere; }
+.req-card .req-row { display: flex; align-items: center; gap: 8px; }
+.req-card .req-prog { font-size: 12px; white-space: nowrap; min-width: 3.5em; text-align: right; }
+.req-card .req-skip { min-width: 72px; }
+.req-card.glitchy .req-text, .req-card.glitchy .req-from { letter-spacing: .5px; font-style: italic; }
+.req-card.done { animation: pop .3s ease-out; }

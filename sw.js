@@ -4,14 +4,14 @@
  * can't hand back stale JS. Bump CACHE whenever the CORE list changes; old caches are deleted
  * on activate.
  */
-var CACHE = 'tallgrass-v5';
+var CACHE = 'tallgrass-v6';
 var CORE = [
   './', './index.html', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './css/style.css',
   './js/numbers.js', './js/sprite.js', './js/audio.js',
   './js/data/sprites_a.js', './js/data/sprites_b.js', './js/data/sprites_c.js',
   './js/data/pokemon.js', './js/data/routes.js', './js/data/producers.js',
   './js/data/upgrades.js', './js/data/gyms.js', './js/data/story.js', './js/data/glitch.js',
-  './js/engine.js', './js/systems/glitch.js', './js/systems/sram.js', './js/systems/gags.js',
+  './js/engine.js', './js/systems/glitch.js', './js/systems/sram.js', './js/systems/gags.js', './js/systems/requests.js',
   './js/ui.js', './js/main.js'
 ];
 

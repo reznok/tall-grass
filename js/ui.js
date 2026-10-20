@@ -762,10 +762,11 @@
       const btn = h('button', { class: 'btn', type: 'button' }, h('span', { text: 'BUY' }), h('small', { text: '' }));
       const own = h('span', { class: 'own', text: '' });
       const info = h('div', { class: 'info', text: '' });
+      const prog = progBar();
       const row = h('div', { class: 'prod' },
         h('div', null, h('span', { class: 'nm', text: UI.corrupt(p.name) }), own),
         btn, info,
-        h('div', { class: 'flav', text: p.flavor ? '"' + p.flavor + '"' : (p.desc || '') }));
+        h('div', { class: 'flav', text: p.flavor ? '"' + p.flavor + '"' : (p.desc || '') }), prog);
       btn.addEventListener('click', () => {
         const amt = st.settings.buyAmt || 1;
         const before = st.producers[p.id] || 0;
@@ -773,12 +774,20 @@
         else if (!before) UI.toast(p.name + ' joins your research!');
       });
       refs.tProds.appendChild(row);
-      prodRows.push({ p, btn, own, info, lbl: btn.firstChild, cost: btn.lastChild });
+      prodRows.push({ p, btn, own, info, prog, lbl: btn.firstChild, cost: btn.lastChild });
     }
     if (!prods.length) refs.tProds.appendChild(h('p', { class: 'empty', text: 'Nobody wants to help yet. Keep tapping.' }));
     // next locked producer teaser
     const next = (TG.data.producers || []).find(p => !TG.producerVisible(p) && (p.act || 1) <= Math.max(2, st.act) && TG.producerCurrency(p.id) !== 'gb');
-    if (next) refs.tProds.appendChild(h('div', { class: 'prod locked' }, h('div', null, h('span', { class: 'nm', text: '??? ' }), h('span', { class: 'dim', text: unlockHint(next) }))));
+    refs.tNextBar = null;
+    if (next) {
+      // when only "RD earned" stands between the player and the next helper, show how close it is
+      const u = next.unlock || {};
+      const onlyRd = u.rdTotal && unlockHint(Object.assign({}, next, { unlock: Object.assign({}, u, { rdTotal: 0 }) })) === '';
+      const bar = onlyRd ? progBar() : null;
+      if (bar) { bar._need = u.rdTotal; refs.tNextBar = bar; }
+      refs.tProds.appendChild(h('div', { class: 'prod locked' }, h('div', null, h('span', { class: 'nm', text: '??? ' }), h('span', { class: 'dim', text: unlockHint(next) })), bar));
+    }
 
     // upgrades
     refs.tUpgs.innerHTML = '';
@@ -845,9 +854,11 @@
       setText(r.lbl, amt === 'max' ? 'BUY ×' + n : amt > 1 ? 'BUY ×' + amt : 'BUY');
       setText(r.cost, fmtCost(cost));
       setClass(r.btn, 'no', !ok);
+      setProg(r.prog, TG.producerCurrency(id) === 'gb' ? st.gb : st.rd, TG.producerPrice(id, 1));
       setText(r.info, prodInfoText(r.p));
     }
     for (const x of upgBtns) setClass(x.b, 'no', !TG.canAfford(x.u.cost));
+    if (refs.tNextBar) setProg(refs.tNextBar, st.rdTotal, refs.tNextBar._need);
     if (st.flags.mart) {
       setText(refs.tBalls, TG.fmtInt(st.balls));
       for (const b of martBtns) {
@@ -866,6 +877,18 @@
       <div class="box"><h2>GYMS</h2><div id="m-gyms"></div></div>
       <div class="box"><h2>POKéMON LEAGUE</h2><div id="m-league"></div></div>`;
     refs.mRoutes = $('#m-routes'); refs.mGyms = $('#m-gyms'); refs.mLeague = $('#m-league');
+  }
+
+  // a thin "saving up" bar: how much of a price the wallet already covers (hidden once affordable)
+  function progBar() { const i = h('i'); const b = h('div', { class: 'bar prog', hidden: true }, i); b._fill = i; return b; }
+  function setProg(bar, have, need) {
+    if (!bar) return;
+    const show = need > 0 && have < need;
+    setHidden(bar, !show);
+    if (!show) return;
+    const pct = Math.max(1, Math.min(100, Math.floor(100 * have / need)));
+    if (bar._fill._w !== pct) { bar._fill._w = pct; bar._fill.style.width = pct + '%'; }
+    bar.title = pct + '%';
   }
 
   function reqChips(reqs) {
@@ -922,14 +945,15 @@
             TG.emit('route_denied', { id: r.id, meets: meets });
           }
         });
-        routeBtns.push({ r, btn, meets });
+        routeBtns.push({ r, btn, meets, prog: meets ? progBar() : null });
       }
       const row = h('div', { class: 'route' + (here ? ' here' : '') + (owned ? '' : ' locked') },
         h('div', { class: 'nm', text: UI.corrupt(r.name) + (r.special === 'pokemon_tower' && TG.isNight() ? ' ☾' : '') }),
         btn,
         h('div', { class: 'flav', text: owned || meets ? (r.flavor || '') : '' }),
         owned ? h('div', { class: 'rtypes', text: routeTypes(r) }) : null,
-        !owned && !meets ? reqChips(TG.reqStatus(r.requires).filter(x => !x.ok)) : null);
+        !owned && !meets ? reqChips(TG.reqStatus(r.requires).filter(x => !x.ok)) : null,
+        !owned && meets ? routeBtns[routeBtns.length - 1].prog : null);
       refs.mRoutes.appendChild(row);
     }
     if (hiddenCount) refs.mRoutes.appendChild(h('p', { class: 'empty', text: '… ' + hiddenCount + ' more area' + (hiddenCount > 1 ? 's' : '') + ' beyond.' }));
@@ -952,6 +976,7 @@
         btn = h('button', { class: 'btn' + (bi === 13 ? ' primary' : ''), type: 'button' }, h('span', { text: 'CHALLENGE' }), h('small', { text: TG.fmt(stt.cost) + ' RD' }));
         btn._unmet = !stt.meets;
         btn.addEventListener('click', () => challenge(g));
+        btn._prog = stt.meets ? progBar() : null;
         gymBtns.push({ g, btn });
       } else {
         btn = h('span', { class: 'dim', text: league ? 'DEFEATED' : '★' });
@@ -961,7 +986,7 @@
         h('div', { class: 'nm', text: UI.corrupt(title) }),
         btn,
         h('div', { class: 'flav', text: [g.title, g.badge].filter(Boolean).join(' · ') || (bi === 13 ? 'Champion' : 'Elite Four') }),
-        stt.beaten ? null : reqChips(stt.reqs)));
+        stt.beaten ? null : reqChips(stt.reqs), btn && btn._prog ? btn._prog : null));
     }
     if (st.badges < 8) refs.mLeague.appendChild(h('p', { class: 'empty', text: 'Collect all 8 badges to reach the Indigo Plateau.' }));
     if (!refs.mGyms.childElementCount) refs.mGyms.appendChild(h('p', { class: 'empty', text: 'No gyms known yet.' }));
@@ -969,10 +994,12 @@
   }
 
   function updateMap() {
-    for (const x of routeBtns) setClass(x.btn, 'no', !(x.meets && TG.canAfford(x.r.cost || 0)));
+    const rd = S().rd;
+    for (const x of routeBtns) { setClass(x.btn, 'no', !(x.meets && TG.canAfford(x.r.cost || 0))); setProg(x.prog, rd, x.r.cost || 0); }
     for (const x of gymBtns) {
       const ok = TG.canAfford(x.g.cost || 0);
       setClass(x.btn, 'no', !ok || x.btn._unmet);
+      setProg(x.btn._prog, rd, x.g.cost || 0);
     }
   }
 
@@ -1114,6 +1141,8 @@
       ['RD LIFETIME', TG.fmt(st.rdLifetime)], ['TAPS', TG.fmtInt(st.taps)], ['CATCHES', TG.fmtInt(st.stats.catches)],
       ['SHINIES', TG.fmtInt(st.stats.shinies)], ['EVOLUTIONS', TG.fmtInt(st.stats.evolutions)], ['BALLS THROWN', TG.fmtInt(st.stats.ballsThrown)]
     ];
+    rows.push(["OAK'S REQUESTS", TG.fmtInt(st.stats.requests || 0)]);
+    if (st.stats.rcFragments) rows.push(['CANDY FRAGMENTS', '✦ ' + TG.fmtInt(st.stats.rcFragments)]);
     if (st.prestige && st.prestige.count) rows.push(['RARE CANDY', TG.fmt(st.prestige.rareCandy)]);
     if (!refs.stats._cells || refs.stats._cells.length !== rows.length) {
       refs.stats.innerHTML = '';
