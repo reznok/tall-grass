@@ -274,12 +274,47 @@
     drawGrassStatics();
   }
 
+  // ---- terrain: the tap area looks like the place you're standing in (js/data/terrain.js)
+  let terrainSig = null, terrainHint = 'TAP THE TALL GRASS';
+  function terrainFor(routeId) {
+    const T = TG.data && TG.data.terrain;
+    const types = (T && T.types) || {};
+    let k = (T && T.byRoute && T.byRoute[routeId]) || 'grass';
+    if (!types[k]) k = 'grass';
+    return { key: k, t: types[k] || null };
+  }
+  // cheap to call: re-renders only when route terrain, palette or glitch band (2/3) changed
+  function syncTerrain(force) {
+    const g = refs.grass;
+    if (!g) return;
+    const b = document.body;
+    const tr = terrainFor(S().currentRoute);
+    const t = tr.t;
+    const pal = b.dataset.palette || 'rse';
+    const band = b.classList.contains('glitch-3') ? 3 : b.classList.contains('glitch-2') ? 2 : 0;
+    const sig = tr.key + '|' + pal + '|' + band;
+    if (!force && sig === terrainSig) return;
+    if (terrainSig && terrainSig.split('|')[1] !== pal && TG.spriteCacheClear) TG.spriteCacheClear();
+    terrainSig = sig;
+    try {
+      const url = TG.spriteDataURL(t ? t.tile : GRASS_TILE, { palette: 'light', ramp: t && t.ramp, corrupt: band >= 2 ? 0.15 : 0 });
+      g.style.backgroundImage = 'url(' + url + ')';
+      g.style.imageRendering = 'pixelated';
+    } catch (e) { /* canvas unavailable */ }
+    const colour = pal === 'rse';
+    const ground = t && (colour ? t.ground : pal === 'dmg' ? t.groundDmg : null);
+    if (ground) g.style.setProperty('--grass', ground); else g.style.removeProperty('--grass');
+    if (t && colour && t.shadow) g.style.setProperty('--enc-shadow', t.shadow); else g.style.removeProperty('--enc-shadow');
+    g.dataset.terrain = tr.key;
+    setClass(g, 'indoor', !!(t && t.indoor));
+    g.setAttribute('aria-label', ((t && t.label) || 'Tall grass') + '. Tap to search.');
+    terrainHint = (t && t.hint) || 'TAP THE TALL GRASS';
+    updateHint();
+  }
+
   function drawGrassStatics() {
     if (!refs.grass) return;
-    try {
-      refs.grass.style.backgroundImage = 'url(' + TG.spriteDataURL(GRASS_TILE, { palette: 'light' }) + ')';
-      refs.grass.style.imageRendering = 'pixelated';
-    } catch (e) { /* canvas unavailable */ }
+    syncTerrain(true);
     if (TG.hasSprite('ball')) {
       TG.drawSprite(refs.gBallIcon, 'ball', { scale: 1 });
       setHidden(refs.gBallIcon, false); setHidden(refs.gBallSym, true);
@@ -296,6 +331,7 @@
     refs.gTod.title = TG.isNight() ? 'Night' : 'Day';
     setHidden(refs.truck, !TG.truckVisible());
     setHidden(refs.gCombo, !st.flags.bike);
+    syncTerrain();
     updateHint();
     renderEvent();
     syncEncounters();
@@ -309,7 +345,7 @@
       return st.flags.mart ? 'OUT OF BALLS · TAP +10 TO BUY' : 'NO BALLS · WAIT FOR OAK OR TAP ✕ TO SHOO';
     }
     if (enc && (st.stats.ballsThrown || 0) < 3 && !caught) return 'TAP A POKéMON TO THROW A BALL';
-    if (!enc && !caught && st.taps < 40) return 'TAP THE TALL GRASS';
+    if (!enc && !caught && st.taps < 40) return terrainHint;
     return '';
   }
   function updateHint() {
@@ -1451,6 +1487,7 @@
     TG.on('badge', () => { UI.markDirty(); renderBadges(); });
     TG.on('route', e => {
       UI.markDirty('map', 'grass', 'town', 'lab');
+      syncTerrain();
       // someone is waiting in the Lab (the Old Man) and the player hasn't been there since
       if (e && e.type === 'unlock' && TG.oldManAvailable() && !S().flags.oldman && active !== 'lab') {
         const b = $('.tabbtn[data-tab="lab"]');
@@ -1510,6 +1547,8 @@
     });
     bindSecrets();
     bindEngine();
+    // glitch.js flips body.glitch-1..3 / data-palette directly: re-tile the terrain on a band change
+    if (window.MutationObserver) new MutationObserver(() => syncTerrain()).observe(document.body, { attributes: true, attributeFilter: ['class', 'data-palette'] });
     rebuildLog();
     applySettings();
     updateTabs();

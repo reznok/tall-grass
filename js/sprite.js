@@ -1,7 +1,9 @@
 /* TALL GRASS — sprite.js
  * Renders 16x16 sprite grids (see ARCHITECTURE.md "Sprite format") to canvas.
  *
- *   TG.drawSprite(canvas, keyOrGrid, { scale=3, palette='dmg'|'shiny'|'glitch'|'silhouette', corrupt=0..1 })
+ *   TG.drawSprite(canvas, keyOrGrid, { scale=3, palette='dmg'|'shiny'|'glitch'|'silhouette'|'light', corrupt=0..1,
+ *                                      ramp=[light, mid, dark] hex })
+ *     ramp overrides the shade mapping in colour mode (Hoenn); 4-shade palettes use 'light'.
  *   TG.spriteDataURL(keyOrGrid, opts)  -> data: URL (for CSS backgrounds)
  *   TG.hasSprite(key)                  -> bool
  *   TG.spriteCacheClear()              -> call after the body palette changes
@@ -144,9 +146,18 @@
     return null;
   }
 
+  // a usable [light, mid, dark] ramp, or null
+  function validRamp(r) {
+    return Array.isArray(r) && r.length === 3 && r.every(function (x) { return !!parseColor(x); }) ? r : null;
+  }
+
   // shade char -> [r,g,b]
-  function shadeMap(palette, key) {
+  function shadeMap(palette, key, ramp) {
     var c = baseColors();
+    if (ramp) {
+      if (colorMode()) return hexRamp(ramp);
+      palette = 'light';
+    }
     if (colorMode()) {
       if (palette === 'light') return hexRamp(GRASS_RAMP);
       var ramp = rampFor(key);
@@ -182,8 +193,8 @@
     return c;
   }
 
-  function renderTile(grid, palette, corrupt, key) {
-    var map = shadeMap(palette, key);
+  function renderTile(grid, palette, corrupt, key, ramp) {
+    var map = shadeMap(palette, key, ramp);
     var cv = makeCanvas(16, 16);
     var ctx = cv.getContext('2d');
     var img = ctx.createImageData(16, 16);
@@ -210,14 +221,15 @@
     return { canvas: cv, imageData: img };
   }
 
-  function getTile(keyOrGrid, palette, corrupt) {
+  function getTile(keyOrGrid, palette, corrupt, ramp) {
     var grid = getGrid(keyOrGrid);
     var key = Array.isArray(keyOrGrid) ? null : String(keyOrGrid);
+    ramp = validRamp(ramp);
     if (!grid) { grid = QMARK; key = '__qmark'; if (palette === 'silhouette') palette = 'dmg'; }
-    if (corrupt > 0 || key === null) return renderTile(grid, palette, corrupt || 0, key);
-    var ck = key + '|' + palette + '|' + (colorMode() ? 'c' : 'm');
+    if (corrupt > 0 || key === null) return renderTile(grid, palette, corrupt || 0, key, ramp);
+    var ck = key + '|' + palette + '|' + (colorMode() ? 'c' : 'm') + '|' + (ramp ? ramp.join(',') : '');
     var t = tileCache[ck];
-    if (!t) t = tileCache[ck] = renderTile(grid, palette, 0, key);
+    if (!t) t = tileCache[ck] = renderTile(grid, palette, 0, key, ramp);
     return t;
   }
 
@@ -233,14 +245,14 @@
     var ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, size, size);
-    var t = getTile(keyOrGrid, palette, corrupt);
+    var t = getTile(keyOrGrid, palette, corrupt, opts.ramp);
     ctx.drawImage(t.canvas, 0, 0, 16, 16, 0, 0, size, size);
   }
 
   function spriteDataURL(keyOrGrid, opts) {
     opts = opts || {};
     var cv = makeCanvas(16, 16);
-    drawSprite(cv, keyOrGrid, { scale: opts.scale || 1, palette: opts.palette, corrupt: opts.corrupt });
+    drawSprite(cv, keyOrGrid, { scale: opts.scale || 1, palette: opts.palette, corrupt: opts.corrupt, ramp: opts.ramp });
     return cv.toDataURL();
   }
 

@@ -33,11 +33,12 @@ This is the binding contract between the engine and the data files. Several agen
 | `js/data/sprites_a.js` | sprites agent A | `TG.sprites[1..50]` |
 | `js/data/sprites_b.js` | sprites agent B | `TG.sprites[51..100]` |
 | `js/data/sprites_c.js` | sprites agent C | `TG.sprites[101..151]` + `TG.sprites.unknown`, `TG.sprites.truck`, `TG.sprites.oak`, `TG.sprites.ball`, `TG.sprites.missingno` |
+| `js/data/terrain.js` | content | `TG.data.terrain` — per-area tap-area backgrounds (see "Terrain additions") |
 
 Script order in `index.html`:
 ```
 numbers.js, sprite.js, audio.js,
-data/sprites_a.js, data/sprites_b.js, data/sprites_c.js,
+data/sprites_a.js, data/sprites_b.js, data/sprites_c.js, data/terrain.js,
 data/pokemon.js, data/routes.js, data/producers.js, data/upgrades.js, data/gyms.js, data/story.js,
 engine.js, systems/glitch.js, systems/sram.js, ui.js, main.js
 ```
@@ -76,7 +77,7 @@ TG.sprites.ball = [
 ```
 Sprites must be **original art** drawn for this project: recognizable silhouettes in the spirit of Gen 1, not copies. Face right or front. Use `3` for outlines, `2` for shading, `1` for highlights/body. Keep 1–2 px margin where possible.
 
-Renderer: `TG.drawSprite(canvasEl, key, {scale=3, palette='dmg'|'shiny'|'glitch'|'silhouette', corrupt=0..1})`. Palette shades map to CSS variables `--c0..--c3`.
+Renderer: `TG.drawSprite(canvasEl, key, {scale=3, palette='dmg'|'shiny'|'glitch'|'silhouette', corrupt=0..1, ramp?})`. Palette shades map to CSS variables `--c0..--c3`. Optional `ramp: [light, mid, dark]` (hex) overrides the shade mapping in colour (Hoenn) mode; in the 4-shade palettes it falls back to `'light'`. `TG.spriteDataURL(keyOrGrid, opts)` takes the same options.
 
 ---
 
@@ -402,3 +403,9 @@ Rule: there should always be something the player could be doing; progress is ne
 **OAK'S REQUESTS** (`js/systems/requests.js`, loaded after `systems/gags.js`): exactly one active request in `state.request` `{kind, key, goal, progress, text, voice: 'oak'|'glitch', reward: {type: 'rd'|'balls'|'candy'|'gb', amount, family?, frag?}, uid}`; `state.requestSkipAt` (ms, 2-minute skip cooldown); `stats.requests` (completed, shown on the Trainer Card) and `stats.rcFragments` (cosmetic). Kinds: `catch_type, catch_species, buy_producer, evolve, unlock_route, tap, throw, new_species, spend` — each generated only when reachable (owned routes, visible producers, unlocked tabs). Act 3+: 30% come from the other voice and pay ▓. Card `#g-req` sits under the Grass stats row. API `TG.systems.requests.{current, complete, skip, generate}`.
 
 **UI**: Town producer rows, Map route/gym rows (requirements met, not affordable) and the next-helper teaser (when only RD earned is missing) show a thin saving-up bar (`.bar.prog`).
+
+## Terrain additions
+
+`js/data/terrain.js` (loaded right after `data/sprites_c.js`): `TG.data.terrain = { types, byRoute }`. `byRoute` maps every route id to a type; anything unmapped uses `grass`. Each type: `{ tile: [16 × 16-char strings of . 1 2 3], ramp: [light, mid, dark], ground, groundDmg: null|hex, shadow, hint, label?, indoor? }`. Tiles are original art drawn to repeat seamlessly on the tap area's 48px grid. Types: `grass town forest cave mountain water tower building power road cave_dark plateau safari glitch` (`glitch` is built at load from seeded 8×4 chunks of the other tiles; `plateau` has no route yet).
+
+**UI** (`ui.js` `syncTerrain`): on route change, palette change, repaint and glitch band change (a MutationObserver on `body` class/`data-palette`; nothing per tick) the `#grass` element gets the tile as its background image (`palette: 'light'` + the type's `ramp`; re-rendered once at `corrupt: 0.15` while `body.glitch-2/3`), inline `--grass` (`ground` in colour mode, `groundDmg` in DMG, otherwise the palette's own), inline `--enc-shadow` (colour mode; the encounter ground shadow is `var(--enc-shadow, var(--c1))`), `data-terrain="<type>"`, `.indoor`, an aria-label from `label`, and the first-tap hint from `hint`. Night: `body.night .grass::after` darkens outdoor types only; `.indoor` skips it and the tower gets a purple tint. Nothing animates.
