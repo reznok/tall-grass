@@ -372,3 +372,17 @@ Acts 3–4, prestige and the ending live in `js/systems/glitch.js`, `js/systems/
 **DOM owned by systems**: `#tab-glitch`, `#tab-sram`, `#hdr-gb` (▓ in the header), `#hdr-pbats` (prestige batteries), `#l-hof` (Hall of Fame in the Lab tab, shown after Champion; corrupted extra entries after Act 3), `#dex-000`, `.crash-ov`. Photosensitivity: nothing flashes faster than 3 Hz (crash glyphs re-scramble at 2.5 Hz, `body.glitch-3::after` noise slowed to 2.5 Hz); with reduced motion the crash overlay is static and `body.crash` inversion is skipped.
 
 **Dev shortcuts** (console only, not in the UI): `TG.dev.champion()`, `.coast(oldman=true)`, `.act3()`, `.act4()`, `.battery(pct)`, `.instability(v)`, `.gb(n)`, `.prestigeCount(n)`, `.glitchAll()`, `.ending()`.
+
+---
+
+## Gags additions
+
+`js/systems/gags.js` (loaded after `systems/sram.js`; optional — nothing references it) adds small set-piece jokes. Text lives in `TG.data.story.gags` (one-shots via `TG.fire('gags', key)`, repeatables via `TG.log`; extra tokens `{n}`, `{amt}`, `{pct}` are filled by gags.js).
+
+**State**: `S.gags` (per run: Magikarp salesman timers/uids, bike purchase + refund time, ledge timer/count, Rocket motto count, Snorlax count, Joey/MOM timers, `momSavings`, miss streak, one-shot markers) and `S.prestige.gags` (survives prestige: `karp` purchases ever, `karpShiny`, `karpCaught`, `joey` call index). Timers are ms timestamps, checked once per second.
+
+**Runtime upgrade**: `gag_mom` "MOM's Savings Plan" (1,500 RD, 1 badge, effect `flag: mom_savings`) is appended to `TG.data.upgrades` at load. Every ~20 min it moves 10% of RD into `S.gags.momSavings`; on `glitch {type:'act3'}` the savings come back ×2.
+
+**UI hooks (ui.js)**: `#g-gags` strip under the grass, `#t-shop` box in Town (both owned by gags.js), elements with `[data-gag]` inside `#grass` are not grass taps, `TG.ui.setNameOverride(text|null)`, events `route_denied` `{id, meets}` (Map unlock refused) and `rename` `{from, to}` (Lab name change). `#g-ballcount` is the tappable Poké Ball counter.
+
+**Dev**: `TG.dev.event(id)` (alias of `TG.startEvent`), `TG.dev.gag(name)` with `salesman | karp n | ledge | joey | mom | leak | snorlax | oak | bike | bikeRefund | motto | nurse | ditto | psyduck`.

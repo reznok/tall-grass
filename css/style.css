@@ -709,3 +709,34 @@ body.bat-low .hdr { border-bottom-style: dashed; }
 .credits.ending .eln:first-child { font-family: var(--font-px); font-size: 12px; }
 body.reduce-motion .credits.ending .eln { transition: none; }
 @media (prefers-reduced-motion: reduce) { .credits.ending .eln { transition: none; } body.bat-flicker #app { opacity: 1; } }
+
+/* ------------------------------------------------------------ gags (js/systems/gags.js) */
+.ballcount.gag-tappable { cursor: pointer; padding: 8px 4px; margin: -8px -4px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+.gag-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: calc(-1 * var(--gap) + 4px) 0 var(--gap); }
+.gag-strip[hidden] { display: none; }
+.gag-chip { flex: 1 1 auto; justify-content: center; gap: 8px; animation: pop .25s ease-out; }
+.gag-chip .gag-ico { display: inline-block; width: 20px; height: 20px; line-height: 16px; text-align: center; border: 2px solid var(--c3); background: var(--c1); font-family: var(--font-px); font-size: 9px; }
+.ledge {
+  position: absolute;
+  bottom: 8px;
+  width: 34%; min-width: 96px; min-height: 44px;
+  z-index: 3;
+  pointer-events: auto;
+  padding: 0 6px 2px;
+  border: 0;
+  border-bottom: 6px solid var(--c3);
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(to bottom, transparent 0 55%, var(--c2) 55% 100%);
+  color: var(--c3);
+  font-family: var(--font-px); font-size: 9px;
+  display: flex; align-items: flex-start; justify-content: center;
+  touch-action: manipulation;
+  cursor: pointer;
+  animation: pop .25s ease-out;
+}
+.ledge span { background: var(--c0); border: 2px solid var(--c3); padding: 3px 5px; }
+.ledge:active span { transform: translateY(3px); }
+.hdr-name.gag-ditto { color: var(--c1); animation: wobble .6s steps(3) 3; }
+.tabbtn.gag-dizzy { animation: wobble .5s steps(3) 4; }
+.gag-shop-text { margin: 0 0 8px; }
+@media (prefers-reduced-motion: reduce) { .gag-chip, .ledge, .hdr-name.gag-ditto, .tabbtn.gag-dizzy { animation: none !important; } }
