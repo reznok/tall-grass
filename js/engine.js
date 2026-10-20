@@ -1253,7 +1253,9 @@
   // offline progress since the last save; returns summary or null
   TG.catchUp = function () {
     var t = now();
-    var away = (t - (S.lastSave || S.lastTick || t)) / 1000;
+    // measure from the last *simulated* moment, not the last save: a tab that was hidden (no ticks)
+    // and then closed saves on pagehide, which would otherwise erase the hidden stretch
+    var away = (t - (S.lastTick || S.lastSave || t)) / 1000;
     S.lastTick = t;
     if (away < 10) return null;
     return TG.applyOffline(away);
