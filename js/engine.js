@@ -1150,25 +1150,28 @@
   };
 
   // ------------------------------------------------------------ loop
+  var OFFLINE_GAP = 15000;
+  // enough fixed steps to simulate any gap below OFFLINE_GAP online (60 used to drop 6–15 s gaps)
+  var MAX_STEPS = Math.ceil(OFFLINE_GAP / TICK) + 1;
   function frame() {
     if (!running) return;
     rafId = requestAnimationFrame(frame);
     var t = now();
     var gap = t - S.lastTick;
     if (gap < 0) { S.lastTick = t; return; }
-    if (gap > 15000) {
+    if (gap > OFFLINE_GAP) {
       // tab was hidden / device slept: treat as offline time
       S.lastTick = t;
       TG.applyOffline(gap / 1000);
       return;
     }
     var n = 0;
-    while (t - S.lastTick >= TICK && n < 60) {
+    while (t - S.lastTick >= TICK && n < MAX_STEPS) {
       S.lastTick += TICK;
       step(DT, S.lastTick);
       n++;
     }
-    if (n >= 60) S.lastTick = t;
+    if (n >= MAX_STEPS) S.lastTick = t;
   }
   TG.start = function () {
     if (running) return;

@@ -1158,7 +1158,7 @@
   }
 
   // ------------------------------------------------------------ per-tick
-  let lastTitleGlitch = 0;
+  let lastTitleGlitch = 0, lastUiTick = 0;
   function updateActive() {
     switch (active) {
       case 'grass': updateGrass(); break;
@@ -1171,11 +1171,14 @@
   }
 
   function onTick() {
+    // the engine may run many catch-up steps in one frame: touch the DOM at most once per ~frame burst
+    const t = Date.now();
+    if (t - lastUiTick < 40) return;
+    lastUiTick = t;
     updateHeader();
     if (dirty[active]) renderTab(active);
     guard('tick', updateActive);
     const gi = UI.glitchIntensity();
-    const t = Date.now();
     if (t - lastTitleGlitch > 1800) {
       lastTitleGlitch = t;
       setText(refs.title, gi > 0 ? UI.corrupt('TALL GRASS', gi) : 'TALL GRASS');
