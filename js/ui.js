@@ -5,7 +5,10 @@
  *
  * Public: TG.ui.init(), .showTab(name), .toast(text), .modal(opts), .confirm(text, fn),
  *         .corrupt(text, intensity?), .glitchIntensity(), .setPalette(p), .markDirty(...tabs),
- *         .refresh(), .playCredits(lines), .toggleDebug(), .floatText(xPct, yPct, text, cls)
+ *         .refresh(), .playCredits(lines), .toggleDebug(), .floatText(xPct, yPct, text, cls),
+ *         .setNameOverride(text|null)
+ * Hooks for js/systems/gags.js: #g-gags strip under the grass, #t-shop box in Town, clicks on
+ * [data-gag] elements inside the grass are not taps, events 'route_denied' {id, meets} and 'rename' {from, to}.
  */
 (function () {
   'use strict';
@@ -201,8 +204,11 @@
       const g = have[i];
       wrap.appendChild(h('i', { class: 'pip' + (g || st.badges >= i ? ' on' : ''), title: g ? g.badge || g.name : 'Badge ' + i }));
     }
-    setText(refs.name, (st.champion ? '★' : '') + (st.name || 'RED'));
+    setText(refs.name, nameOverride != null ? nameOverride : (st.champion ? '★' : '') + (st.name || 'RED'));
   }
+  // a system may briefly replace the header name (e.g. DITTO); null restores it
+  let nameOverride = null;
+  UI.setNameOverride = function (text) { nameOverride = text == null ? null : String(text); renderBadges(); };
 
   function updateHeader() {
     const st = S();
@@ -217,7 +223,7 @@
       <div class="box grass-top">
         <div class="route-name" id="g-route">PALLET TOWN</div>
         <span class="tod" id="g-tod" title="Time of day"></span>
-        <span class="ballcount" title="Poké Balls"><canvas id="g-ballicon" width="16" height="16"></canvas><span id="g-ballsym" hidden>◓</span> <span id="g-balls">0</span></span>
+        <span class="ballcount" id="g-ballcount" title="Poké Balls"><canvas id="g-ballicon" width="16" height="16"></canvas><span id="g-ballsym" hidden>◓</span> <span id="g-balls">0</span></span>
       </div>
       <div class="box event-banner" id="g-event" hidden>
         <span class="event-text" id="g-event-text"></span><span id="g-event-time"></span>
@@ -229,6 +235,7 @@
         <div id="fx-layer"></div>
         <div class="grass-hint" id="g-hint"><span>TAP THE TALL GRASS</span></div>
       </div>
+      <div class="gag-strip" id="g-gags" hidden></div>
       <div class="box grass-stats">
         <span>TAP <b id="g-tap">1</b></span>
         <span>FIND <b id="g-enc">20%</b></span>
@@ -316,6 +323,8 @@
     const rect = refs.grass.getBoundingClientRect();
     const xPct = (e.clientX - rect.left) / rect.width * 100;
     const yPct = (e.clientY - rect.top) / rect.height * 100;
+    // elements owned by systems (js/systems/gags.js) handle their own clicks
+    if (e.target.closest && e.target.closest('[data-gag]')) return;
     const encEl = e.target.closest && e.target.closest('.enc');
     e.preventDefault();
     if (encEl) {
@@ -645,6 +654,7 @@
         <div class="buyamt" id="t-amt"><button class="btn small" type="button" data-amt="1">×1</button><button class="btn small" type="button" data-amt="10">×10</button><button class="btn small" type="button" data-amt="max">MAX</button></div></div>
         <div id="t-prods"></div></div>
       <div class="box" id="t-mart" hidden><h2>POKé MART</h2><p class="dim" style="margin:0 0 8px">"Welcome! May I help you?" — you have <b id="t-balls">0</b> balls.</p><div class="mart-btns" id="t-mart-btns"></div></div>
+      <div class="box" id="t-shop" hidden></div>
       <div class="box"><h2>UPGRADES</h2><div class="upgrades" id="t-upgs"></div></div>`;
     refs.tProds = $('#t-prods'); refs.tUpgs = $('#t-upgs'); refs.tMart = $('#t-mart'); refs.tMartBtns = $('#t-mart-btns'); refs.tBalls = $('#t-balls');
     refs.tAmt = $('#t-amt');
@@ -801,7 +811,11 @@
         btn = h('button', { class: 'btn', type: 'button' }, h('span', { text: 'UNLOCK' }), h('small', { text: TG.fmt(r.cost || 0) + ' RD' }));
         btn.addEventListener('click', () => {
           if (TG.unlockRoute(r.id)) UI.toast(r.name + '!');
-          else { UI.toast(meets ? 'Not enough RD.' : 'Requirements not met.'); if (TG.sfx) TG.sfx.play('error'); }
+          else {
+            UI.toast(meets ? 'Not enough RD.' : 'Requirements not met.');
+            if (TG.sfx) TG.sfx.play('error');
+            TG.emit('route_denied', { id: r.id, meets: meets });
+          }
         });
         routeBtns.push({ r, btn, meets });
       }
@@ -910,9 +924,11 @@
     refs.oldBtn.addEventListener('click', () => { if (TG.talkOldMan()) { renderLab(); UI.toast('The old man rambles about the coast...'); } });
     refs.lName.addEventListener('change', () => {
       const v = refs.lName.value.trim().toUpperCase().slice(0, 10);
+      const from = S().name;
       S().name = v || 'RED';
       refs.lName.value = S().name;
       renderBadges();
+      if (from !== S().name) TG.emit('rename', { from: from, to: S().name });
     });
     refs.lSound.addEventListener('click', () => {
       const st = S();
