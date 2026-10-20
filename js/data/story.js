@@ -221,9 +221,16 @@ TG.data.story = {
 
   oldman: [
     "An OLD MAN is lying across the road in Viridian. He has not had his coffee.",
-    "OLD MAN: Ahh, I've had my coffee now. I'll show you how to catch POKéMON. Watch closely.",
-    "He throws a ball. It is slow. It is perfect.",
+    "You bring him a coffee. He studies it for a long time. OLD MAN: This is tea.",
+    "You bring him a coffee. OLD MAN: Ahh. Now. I'll show you how to catch POKéMON. Watch closely.",
+    "He walks into the tall grass. He walks very slowly. A WEEDLE appears and has time to settle in.",
+    "OLD MAN: First, you weaken it. He does not weaken it. He drinks some of the coffee.",
+    "He reaches for a POKé BALL. He finds his glasses. He puts on the glasses. Now he can see the ball.",
+    "The WEEDLE waits. Nobody has ever been this patient with it. It is starting to feel respected.",
+    "He sets the coffee down on the WEEDLE. The WEEDLE holds it. Neither of them mentions it.",
+    "He throws. It is slow. It is perfect. The WEEDLE climbs in on its own, mostly out of courtesy.",
     "OLD MAN: That's how it's done. Remember it. Remember where you were standing when I showed you.",
+    "He lies back down across the road. The coffee is still warm. You do not know how. Neither does he.",
     "OLD MAN: Funny thing. Ever since I first showed someone that, the east coast of Cinnabar looks wrong to me."
   ],
 
@@ -278,6 +285,11 @@ TG.data.story = {
     "CATERING ............... CHANSEY",
     "VILLAINY ............... TEAM ROCKET",
     "TRUCK .................. UNKNOWN",
+    "TRENCH COAT ............ (NO COMMENT)",
+    "LEDGES ................. ONE-WAY ONLY",
+    "",
+    "ALSO STARRING .......... {name}",
+    "                         (AS THEMSELF)",
     "",
     "SPECIAL THANKS ......... PIDGEY (ALL OF THEM)",
     "                         MAGIKARP (FOR TRYING)",
@@ -321,7 +333,13 @@ TG.data.story = {
     "BLUE: Why do I always find you right where I left you? It's like you never move.",
     "BLUE: Sometimes it feels like we're the only two people in Kanto. Everyone else just stands still.",
     "BLUE: Have you noticed the trainers say the same thing every time? Word for word? Just me?",
-    "BLUE: When I win, I stay on top forever. Literally forever. That's what winning means, right? Right?"
+    "BLUE: When I win, I stay on top forever. Literally forever. That's what winning means, right? Right?",
+    "BLUE: I was at your house. Your mom made me lunch. It was really good. She asked how you were. I said fine.",
+    "BLUE: Gramps framed something you sent him. It was a spreadsheet. He's never framed anything of mine.",
+    "BLUE: You throw POKé BALLS like you're returning them to a store without a receipt.",
+    "BLUE: I named my PIDGEY 'PIDGEY' so I'd never forget what it is. It comes up more than you'd think.",
+    "BLUE: Your Bug Catcher's been in shorts in a forest for weeks. As his employer, that's on you.",
+    "BLUE: Brock gives me a little speech every time I win. I asked what he says to you. Same speech. Slower."
   ],
   rocket: [
     "TEAM ROCKET grunts are going through your notes. They're reading the RATTATA section very slowly.",
@@ -360,8 +378,194 @@ TG.data.story = {
     "Somewhere far off, a SNORLAX rolls over. The ground notices.",
     "The sun moves eight pixels west.",
     "Your rival's footprints are already on every route you visit.",
-    "A PSYDUCK stares into the middle distance. You follow its gaze. Nothing. Then, briefly, something."
+    "A PSYDUCK stares into the middle distance. You follow its gaze. Nothing. Then, briefly, something.",
+    "A Youngster tells you his shorts have pockets. He shows you the pockets. They are, admittedly, good pockets.",
+    "OAK: I've labeled every drawer in the lab. Every label says LAB. I'm not sure what I was going for.",
+    "A PIDGEY has sat on the same fencepost since Route 1 opened. It considers this a career.",
+    "A Lass asks if you're a trainer. You say yes. She says 'Me too!' and then stands perfectly still for an hour.",
+    "The POKé MART is out of POTIONS. It has always been out of POTIONS. It offers you a ball instead.",
+    "A man in Viridian explains how to catch POKéMON. A second man explains the first man. You leave.",
+    "OAK: Your MOM called to ask if you're eating. I said yes. Are you? Tap twice for yes.",
+    "A CATERPIE eats a leaf. Statistically, this is the biggest news on the route today.",
+    "A sign reads ROUTE 1. Next to it, a second sign also reads ROUTE 1, for anyone who missed the first.",
+    "The Day Care man says your POKéMON are doing great. He is holding a POKéMON you have never seen before.",
+    "A Hiker lists every mountain he has climbed. It is one mountain. He has climbed it a great many times.",
+    "A RATTATA bites a Youngster. The Youngster explains that this means it likes him. Everyone nods.",
+    "You check your bag. Everything is in the correct pocket. This has never once been your doing.",
+    "A Fisherman says nothing's biting. A MAGIKARP is hanging off his line. He means nothing good.",
+    "OAK: Science tip: put 'probably' at the end of a sentence and it counts as a hypothesis. Probably.",
+    "Nurse Joy heals a team in four seconds flat. Nobody has asked how. She would like it to stay that way.",
+    "A Bug Catcher shows you a jar. It is empty. He says you should have seen it this morning."
   ],
+
+  // Set-piece gags (js/systems/gags.js). Repeatable lines are picked by index or at random;
+  // one-shot lines go through TG.fire('gags', key). Tokens: {name} {rival} {route} (engine), {n} {amt} {pct} (gags).
+  gags: {
+    // --- Magikarp salesman (after Route 4). offer/buy are indexed by purchases so far; last entry repeats.
+    karp_offer: [
+      "A man in a trench coat offers you a MAGIKARP for 500 RD. He says it's a great deal.",
+      "The man in the trench coat is back. Another MAGIKARP, 500 RD. He says it's an even better deal. Same price.",
+      "MAGIKARP, 500 RD. He says this one is different. He holds it up. It is the same.",
+      "He opens the coat. It is lined with MAGIKARP. 500 RD each. He does not do bulk.",
+      "He says he's been thinking about you. He has a MAGIKARP. It is 500 RD. He has been thinking about that too.",
+      "'Last one,' he says, holding a MAGIKARP. There is clearly another one behind it.",
+      "He brought a little folding table this time. On it: a MAGIKARP. Price tag: 500 RD. Handwritten.",
+      "He waves you over like an old friend. MAGIKARP. 500 RD. He's thinking of getting business cards.",
+      "He says the MAGIKARP market is very hot right now. The MAGIKARP is not hot. It is damp.",
+      "MAGIKARP. 500 RD. He no longer explains. You no longer ask. It is a kind of trust.",
+      "The man hesitates. 'This one,' he says, quieter than usual, 'is special.' 500 RD.",
+      "He's back. He looks tired. MAGIKARP, 500 RD. He no longer says it's a great deal."
+    ],
+    karp_buy: [
+      "",
+      "You bought a MAGIKARP. The man is already gone. So is the trench coat. He was wearing it.",
+      "You bought another MAGIKARP. You have now made the same decision twice. That's a pattern.",
+      "MAGIKARP #3. OAK has started cc'ing you on emails titled 're: the MAGIKARP'.",
+      "MAGIKARP #4. The man waves as he leaves. You wave back. Neither of you meant to.",
+      "MAGIKARP #5. The man has bought a second trench coat. You paid for most of it.",
+      "MAGIKARP #6. A Fisherman watches the deal and quietly puts his rod away.",
+      "OAK: I've heard a man is selling MAGIKARP for 500 RD. Please tell me it isn't you buying them.",
+      "MAGIKARP #8. You tell yourself you're building a collection. The MAGIKARP knows.",
+      "MAGIKARP #9. The man throws in a free receipt. It says MAGIKARP. It is also damp.",
+      "MAGIKARP #10. He shakes your hand. He says he'll remember you. He says it like a warning.",
+      "This MAGIKARP is gold. The man won't look at it. He leaves faster than usual.",
+      "You bought a MAGIKARP (#{n}). It was a great deal. You know because someone told you."
+    ],
+    karp_no: [
+      "You say no. He says he'll be around. He is always around.",
+      "You say no. He nods like you've said something wise, and also like you'll be back.",
+      "No. He shrugs. The MAGIKARP shrugs. It doesn't have shoulders. It manages."
+    ],
+    karp_broke: [
+      "He looks at your RD. He looks at you. He says he'll be around."
+    ],
+    karp_catch: [
+      "It splashed. Nothing happened.",
+      "MAGIKARP used SPLASH. Nothing happened. The POKé BALL closed anyway, out of pity.",
+      "It splashed. Nothing happened. It seemed quite pleased with that.",
+      "It flopped into the ball on purpose. It was the most decisive thing it has ever done.",
+      "Gotcha. It splashed. Somewhere, the trench coat man hears it and smiles."
+    ],
+    karp_shiny: [
+      "It splashed. Something happened. Not much. But something.",
+      "OAK: Gold scales! Four hundred candy and that fish will stop being a joke. Hold on to it.",
+      "Deep inside the MAGIKARP, something with a great many teeth is waiting for candy. It can wait."
+    ],
+    // --- Bike shop (Cerulean, before the Thunder Badge)
+    bike_buy: [
+      "You bought a BICYCLE for 1,000,000 RD. The shop owner counts it twice and doesn't look up.",
+      "You own a bicycle. You cannot ride it indoors. You are always indoors."
+    ],
+    bike_refund: [
+      "BIKE SHOP: Full refund issued. Nobody keeps one. +1,000,000 RESEARCH DATA (regret)."
+    ],
+    bike_free: [
+      "Oh. The Bike Voucher was free the whole time."
+    ],
+    // --- tap the ball counter 5x fast
+    oak_notnow: [
+      "OAK: There's a time and place for everything! But not now.",
+      "OAK: Still not now.",
+      "OAK: Now is also not the time. I checked.",
+      "OAK: There's a time and place for everything. I'll let you know. Don't call me."
+    ],
+    // --- Route 1 ledge
+    ledge: [
+      "You jump down the ledge. You cannot jump back up. This is fine.",
+      "You hop down the ledge. That part of Route 1 is behind you now. It always will be.",
+      "Down the ledge. A Youngster on the upper level watches you go. He will never come down.",
+      "You jump the ledge. You land facing the wrong way. You stay like that for a second.",
+      "Ledge jumped. Somewhere, a man who has walked around it for eleven years feels nothing.",
+      "You jump. Down is the only direction a ledge has ever offered anyone.",
+      "You jump down the ledge for 1 RD. OAK writes it down. He underlines the 1."
+    ],
+    ledge_10: [
+      "Achievement: LEDGE ENJOYER. It does nothing. You knew that going in."
+    ],
+    // --- Team Rocket motto: 4 lines, then one interruption per raid (last one repeats)
+    rocket_motto: [
+      "ROCKET: To protect the world from research we didn't do!",
+      "ROCKET: To unite all data within our clipboard!",
+      "ROCKET: To denounce the evils of peer review!",
+      "ROCKET: To extend our reach to the RD ab—"
+    ],
+    rocket_cat: [
+      "ROCKET: ...that's it, we don't have a cat. That's where the cat goes.",
+      "ROCKET: ...we put up flyers for a cat. One MEOWTH called. Just to say no.",
+      "ROCKET: ...we got a PERSIAN. He won't say the line. He just looks at us.",
+      "ROCKET: ...the PERSIAN has left us for a gym leader. We're not talking about it."
+    ],
+    rocket_cut: [
+      "ROCKET: You can't fight us during the motto! There are rules! ...Are there rules?"
+    ],
+    // --- Route 12 Snorlax, tapped on the Map without the POKé FLUTE (last 4 cycle)
+    snorlax: [
+      "A SNORLAX is asleep across Route 12. ZZZ.",
+      "ZZZZZ.",
+      "It rolled over. The road is still blocked. More road is blocked now.",
+      "You poke it. It is warm. It is like poking a hill that has opinions.",
+      "ZZZZZZZZZ. The Zs are getting louder. You're not sure how that works in writing.",
+      "A man walks by. 'Been there since Tuesday,' he says. He does not say which Tuesday.",
+      "It sneezes. A Bug Catcher three routes away says bless you.",
+      "OAK: A POKé FLUTE would wake it. Or keep poking it. That's also technically science.",
+      "It rolled over again. Route 12 is now partly Route 11. Route 11 has not been consulted.",
+      "ZZZ.",
+      "ZZZZ.",
+      "It shifts in its sleep. The map redraws itself a little to make room.",
+      "It is still asleep. In a sense, so are you."
+    ],
+    // --- Youngster Joey's phone number ({pct} grows a digit per call, forever)
+    joey: [
+      "JOEY: My RATTATA is still in the top {pct} percent of RATTATA.",
+      "JOEY: Just checking in. My RATTATA? Top {pct} percent. Still.",
+      "JOEY: Update: my RATTATA is in the top {pct} percent. It's really climbing.",
+      "JOEY: Did I tell you about my RATTATA? Top {pct} percent. Call you later."
+    ],
+    // --- one-shots
+    nurse50: [
+      "NURSE: We hope to see you again. — She says it looking directly at the camera.",
+      "There is no camera. You check anyway."
+    ],
+    ditto: [
+      "DITTO registered. For a moment, so were you.",
+      "You are {name} again. Probably. You check the trainer card to be sure."
+    ],
+    psyduck: [
+      "PSYDUCK has a headache. So does the POKéDEX. It needed a moment."
+    ],
+    miss10: ["OAK: Aim for the POKéMON. Not near it. At it."],
+    miss25: ["OAK: I've started a separate notebook just for your throws. It's mostly diagrams of grass."],
+    miss50: ["A wild POKéMON throws a POKé BALL back at you, just to show you how it's done."],
+    // --- MOM's savings plan (upgrade gag_mom). {amt} = RD moved to savings
+    mom_call: [
+      "MOM called. She put {amt} RD (10%) in savings for you. You have a savings account now. You can't open it. Yet.",
+      "MOM called to ask if you're eating. While you answered, she moved {amt} RD into savings.",
+      "MOM called. Savings +{amt} RD. 'For later,' she says. She doesn't say when later is.",
+      "MOM called. She saved {amt} RD and bought you a doll. The doll was free. She says.",
+      "MOM called. +{amt} RD to savings. She says your room is clean. She says she cleaned it again."
+    ],
+    mom_broke: [
+      "MOM called. She looked at your RD and decided to call back later. She did not say why."
+    ],
+    mom_static: [
+      "MOM called. It was mostly static. She sounded proud. You think it was her.",
+      "MOM called. The line was quiet for a long time. Then: 'Are you eating?' Then static.",
+      "MOM called. You heard the TV in the background. It was showing the grass."
+    ],
+    mom_leak: [
+      "MOM's savings account leaked through a crack in the save file: +{amt} RD. It doubled on the way out.",
+      "i found this in a drawer it had your name on it"
+    ],
+    // --- name rater (Lab -> NAME); key = name_<lowercase name>
+    name_blue: ["OAK: Your name is BLUE? ...No. That's my grandson. You're the other one."],
+    name_oak: ["OAK: That's my name. You can't just— ...Fine. Two OAKs. Science will sort it out."],
+    name_ash: ["OAK: ASH? Hm. Sounds like someone who'd never get any older. Lovely name."],
+    name_gary: ["OAK: GARY? My grandson went through a GARY phase. Overseas, mostly."],
+    name_you: ["OAK: Very funny."],
+    name_ditto: ["Your name is DITTO now. You feel like you could be anyone. You can't, but you feel it."],
+    name_missingno: ["OAK: That isn't a name. That's a gap where a name should go."],
+    name_missingno_glitch: ["thats mine give it back"]
+  },
 
   act: {
     2: [
@@ -415,7 +619,8 @@ TG.data.story = {
     "who is holding the game boy",
     "it is getting colder in the save file",
     "the sun is out where you are isnt it",
-    "every save is a small death and a small birth"
+    "every save is a small death and a small birth",
+    "my name is missingo  missinog  no wait  it is written on me somewhere"
   ],
   hall_of_fame: [
     "HALL OF FAME",
@@ -489,7 +694,8 @@ TG.data.storyCls = function (trigger, line) {
   if (/^OAK: /.test(line)) return "oak";
   if (/^BLUE: /.test(line) || trigger === "rival") return "rival";
   var act34 = { glitch_first: 1, missingno_caught: 1, glitch_whisper: 1, hall_of_fame: 1, instability_crash: 1,
-    sram_appear: 1, battery_low: 1, battery_dead: 1, prestige_done: 1, debug_menu: 1, dex_0: 1, glitch_city: 1 };
+    sram_appear: 1, battery_low: 1, battery_dead: 1, prestige_done: 1, debug_menu: 1, dex_0: 1, glitch_city: 1,
+    gags: 1 };
   if (act34[trigger] && line === line.toLowerCase() && !/[.!?,]/.test(line)) return "glitch";
   if (trigger === "idle_lines" && /^: /.test(line)) return "glitch";
   return "sys";
