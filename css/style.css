@@ -365,10 +365,11 @@ body.night .grass::after { opacity: .22; }
 .event-banner .btn { background: var(--c0); color: var(--c3); border-color: var(--c0); }
 
 /* story log */
-.log { overflow-y: auto; font-size: 13px; overscroll-behavior: contain; }
+.log { overflow-y: auto; font-size: 13px; line-height: 1.55; overscroll-behavior: contain; }
 .log.mini { max-height: 220px; }
 .log.full { max-height: 420px; }
-.log .ln { padding: 3px 0 3px 10px; border-left: 3px solid transparent; margin-bottom: 2px; word-wrap: break-word; }
+.log .ln { padding: 5px 0 5px 10px; border-left: 3px solid transparent; margin-bottom: 8px; max-width: 64ch; word-wrap: break-word; }
+.log .ln:last-child { margin-bottom: 0; }
 .log .ln.oak { border-left-color: var(--c2); }
 .log .ln.rival { border-left-color: var(--c3); font-style: italic; }
 .log .ln.sys { opacity: .85; }
