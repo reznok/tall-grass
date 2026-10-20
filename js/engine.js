@@ -722,8 +722,11 @@
     if (isNew || enc.shiny) recompute();
     var gain = num(sp && sp.baseValue, 10) * TG.mults.global * (enc.shiny ? 10 : 1) * weight;
     addRD(gain);
-    if (sp && sp.family) S.candy[sp.family] = (S.candy[sp.family] || 0) + TG.effects.candyMult * weight;
-    S.stats.catches += weight;
+    // an evolution registers the new form but is not a catch: no candy refund, no catch stat
+    if (!enc.evolved) {
+      if (sp && sp.family) S.candy[sp.family] = (S.candy[sp.family] || 0) + TG.effects.candyMult * weight;
+      S.stats.catches += weight;
+    }
     if (!silent) {
       TG.fire('first_catch');
       if (enc.shiny) TG.fire('shiny');
@@ -835,7 +838,7 @@
     S.candy[sp.family] -= sp.candyToEvolve;
     S.stats.evolutions++;
     TG.log('What? ' + sp.name.toUpperCase() + ' is evolving!', 'sys');
-    registerCatch({ id: toId, shiny: false }, 1, true);
+    registerCatch({ id: toId, shiny: false, evolved: true }, 1, true);
     TG.log(sp.name.toUpperCase() + ' evolved into ' + (to ? to.name.toUpperCase() : '???') + '!', 'sys');
     TG.fire('first_evolve');
     if (TG.sfx) TG.sfx.play('evolve');
