@@ -31,7 +31,7 @@ TG.data = TG.data || {};
   var OWNED = [10, 25, 50, 100, 200];
   var COSTX = [10, 50, 500, 5000, 50000];
   var tiers = [
-    ["bugcatcher", "Bug Catchers", 15, [
+    ["bugcatcher", "Bug Catchers", 35, [
       ["Bug Net", "Twice the bugs. Twice the comfy."],
       ["Comfy Shorts", "They are comfy. They are easy to wear. They are mandatory."],
       ["Sweet Honey Jar", "Smear it on a tree. Wait. Write down what arrives."],
@@ -111,12 +111,12 @@ TG.data = TG.data || {};
 
   // ---- Tap power (tapMult ×2 at RD milestones)
   var taps = [
-    [50, "Sturdy Sneakers", "Good for kicking through grass. Bad for sneaking up on anything."],
-    [5000, "Running Shoes", "A gift from Mom. They make a little squeak. The grass hates it."],
-    [5e5, "Grass Whistle", "Blow it while you tap. The grass blows back."],
-    [5e7, "Focus Band", "Tap with intent. Tap with your whole heart. Tap."],
-    [5e9, "Silk Scarf", "Normal-type moves are stronger. Tapping is the most Normal move there is."],
-    [5e11, "Choice Band", "You may only do one thing now. You have chosen tapping."]
+    [28, "Sturdy Sneakers", "Good for kicking through grass. Bad for sneaking up on anything."],
+    [6600, "Running Shoes", "A gift from Mom. They make a little squeak. The grass hates it."],
+    [2.1e6, "Grass Whistle", "Blow it while you tap. The grass blows back."],
+    [3.1e7, "Focus Band", "Tap with intent. Tap with your whole heart. Tap."],
+    [3.3e9, "Silk Scarf", "Normal-type moves are stronger. Tapping is the most Normal move there is."],
+    [4.9e11, "Choice Band", "You may only do one thing now. You have chosen tapping."]
   ];
   taps.forEach(function (t, i) {
     add("tap_" + (i + 1), "tap", t[1], t[0], { rdTotal: t[0], upgrades: i ? ["tap_" + i] : [] },
@@ -124,127 +124,128 @@ TG.data = TG.data || {};
   });
 
   // ---- Tap adds a share of RD/sec
-  add("tapadd_1", "tap", "Sweet Scent", 5e4, { badges: 1, upgrades: ["tap_2"] },
+  add("tapadd_1", "tap", "Sweet Scent", 66000, { badges: 1, upgrades: ["tap_2"] },
     { type: "tapAddRate", value: 0.01 }, "Every tap smells like something worth finding.",
     "Each tap also grants 1% of your RD/sec.");
-  add("tapadd_2", "tap", "Rustle Technique", 5e7, { badges: 3, upgrades: ["tapadd_1"] },
+  add("tapadd_2", "tap", "Rustle Technique", 3.1e7, { badges: 3, upgrades: ["tapadd_1"] },
     { type: "tapAddRate", value: 0.02 }, "A wrist flick taught by a very old Bug Catcher.",
     "Each tap also grants +2% of your RD/sec.");
-  add("tapadd_3", "tap", "Grass Knot", 5e10, { badges: 5, upgrades: ["tapadd_2"] },
+  add("tapadd_3", "tap", "Grass Knot", 3.3e10, { badges: 5, upgrades: ["tapadd_2"] },
     { type: "tapAddRate", value: 0.05 }, "You tie the grass into knots. The grass ties you into the research.",
     "Each tap also grants +5% of your RD/sec.");
 
   // ---- Balls
-  add("great_ball", "ball", "GREAT BALL", 5000, { flags: ["mart"] },
+  add("great_ball", "ball", "GREAT BALL", 6600, { flags: ["mart"] },
     { type: "catchRateMult", value: 1.5 }, "Blue, with red stripes. Slightly greater than a POKé BALL.",
     "Catch rate ×1.5.");
-  add("ultra_ball", "ball", "ULTRA BALL", 1e8, { badges: 4, upgrades: ["great_ball"] },
+  add("ultra_ball", "ball", "ULTRA BALL", 6e7, { badges: 4, upgrades: ["great_ball"] },
     { type: "catchRateMult", value: 2 }, "Black and yellow. Ultra, in the marketing sense.",
     "Catch rate ×2.");
-  add("master_ball", "ball", "MASTER BALL", 1e13, { flags: ["champion"], upgrades: ["ultra_ball"] },
+  add("master_ball", "ball", "MASTER BALL", 7.3e13, { flags: ["champion"], upgrades: ["ultra_ball"] },
     { type: "catchRateMult", value: 10 }, "It never fails. Silph built exactly one. You now own it, somehow, in bulk.",
     "Catch rate ×10.");
-  add("mart_card", "ball", "Mart Membership Card", 2e4, { flags: ["mart"] },
+  add("mart_card", "ball", "Mart Membership Card", 26000, { flags: ["mart"] },
     { type: "ballCost", value: 0.8 }, "Members save 20%. Membership is free. Do not ask what it costs.",
     "POKé BALLS cost 20% less.");
-  add("bulk_balls", "ball", "Bulk Order Form", 1e7, { badges: 3, upgrades: ["mart_card"] },
+  add("bulk_balls", "ball", "Bulk Order Form", 6.2e6, { badges: 3, upgrades: ["mart_card"] },
     { type: "ballCost", value: 0.8 }, "Order ninety-nine at once. The clerk does not blink.",
     "POKé BALLS cost another 20% less.");
 
   // ---- Auto-catch
-  add("auto_1", "auto", "Youngster Joey Pitches", 8000, { badges: 1, flags: ["mart"] },
+  add("auto_1", "auto", "Youngster Joey Pitches", 11000, { badges: 1, flags: ["mart"] },
     { type: "autoCatch", value: 0.2 }, "Joey throws for you. Overhand. With a lot of feeling.",
     "Automatically throws 0.2 balls/s at encounters.");
-  add("auto_2", "auto", "Bug Catcher Relay", 2e6, { badges: 2, upgrades: ["auto_1"] },
+  add("auto_2", "auto", "Bug Catcher Relay", 8.5e6, { badges: 2, upgrades: ["auto_1"] },
     { type: "autoCatch", value: 0.5 }, "A line of Bug Catchers passes balls hand to hand into the grass.",
     "+0.5 automatic throws/s.");
-  add("auto_3", "auto", "Ace Trainer Arm", 5e8, { badges: 4, upgrades: ["auto_2"] },
+  add("auto_3", "auto", "Ace Trainer Arm", 3e8, { badges: 4, upgrades: ["auto_2"] },
     { type: "autoCatch", value: 1 }, "A professional. She does not miss. She does not speak.",
     "+1 automatic throw/s.");
-  add("auto_4", "auto", "Ball Cannon", 1e11, { badges: 6, upgrades: ["auto_3"] },
+  add("auto_4", "auto", "Ball Cannon", 7.9e10, { badges: 6, upgrades: ["auto_3"] },
     { type: "autoCatch", value: 2 }, "Silph engineering. Fires POKé BALLS at a rate best described as \"many\".",
     "+2 automatic throws/s.");
 
   // ---- Encounter rate
-  add("enc_1", "encounter", "Long Grass Seeds", 2000, { rdTotal: 1000 },
+  add("enc_1", "encounter", "Long Grass Seeds", 1100, { rdTotal: 560 },
     { type: "encounterMult", value: 1.5 }, "Plant them anywhere. Something will be living in them by morning.",
     "Encounters ×1.5.");
-  add("enc_2", "encounter", "Poké Doll Decoy", 3e5, { badges: 2, upgrades: ["enc_1"] },
+  add("enc_2", "encounter", "Poké Doll Decoy", 1.3e6, { badges: 2, upgrades: ["enc_1"] },
     { type: "encounterMult", value: 1.5 }, "Wild POKéMON come to investigate. It is a very convincing doll.",
     "Encounters ×1.5.");
-  add("enc_3", "encounter", "OLD ROD", 3e7, { badges: 3, upgrades: ["enc_2"] },
+  add("enc_3", "encounter", "OLD ROD", 1.9e7, { badges: 3, upgrades: ["enc_2"] },
     { type: "encounterMult", value: 2 }, "Fish, for once. You will mostly catch MAGIKARP. You will love them anyway.",
     "Encounters ×2.");
-  add("enc_4", "encounter", "SUPER ROD", 3e10, { badges: 6, upgrades: ["enc_3"] },
+  add("enc_4", "encounter", "SUPER ROD", 2.4e10, { badges: 6, upgrades: ["enc_3"] },
     { type: "encounterMult", value: 2 }, "From the Fishing Guru's younger brother. He is also a guru.",
     "Encounters ×2.");
 
   // ---- Dex bonus (Bill's PC)
-  add("dex_1", "dex", "Bill's Notes", 2e5, { dexCount: 20 },
-    { type: "dexBonusMult", value: 1.5 }, "Bill's margin notes on your Pokédex. Some are about you.",
-    "Pokédex bonus ×1.5.");
-  add("dex_2", "dex", "Cell Separation System", 2e8, { dexCount: 50, upgrades: ["dex_1"] },
-    { type: "dexBonusMult", value: 1.5 }, "Bill used it on himself once. Your data is in much better hands.",
-    "Pokédex bonus ×1.5.");
-  add("dex_3", "dex", "Storage System v2", 2e11, { dexCount: 100, upgrades: ["dex_2"] },
-    { type: "dexBonusMult", value: 2 }, "Twelve boxes of twenty. Room for everything. Room for more than everything.",
-    "Pokédex bonus ×2.");
-  add("dex_4", "dex", "Sea Cottage Archive", 2e13, { dexCount: 140, upgrades: ["dex_3"] },
-    { type: "dexBonusMult", value: 2 }, "Bill backed up the whole Pokédex to a cottage by the sea. Twice.",
-    "Pokédex bonus ×2.");
+  add("dex_1", "dex", "Bill's Notes", 260000, { dexCount: 20 },
+    { type: "dexBonusMult", value: 1.55 }, "Bill's margin notes on your Pokédex. Some are about you.",
+    "Pokédex bonus ×1.55.");
+  add("dex_2", "dex", "Cell Separation System", 1.2e8, { dexCount: 50, upgrades: ["dex_1"] },
+    { type: "dexBonusMult", value: 1.55 }, "Bill used it on himself once. Your data is in much better hands.",
+    "Pokédex bonus ×1.55.");
+  add("dex_3", "dex", "Storage System v2", 1.9e11, { dexCount: 100, upgrades: ["dex_2"] },
+    { type: "dexBonusMult", value: 2.05 }, "Twelve boxes of twenty. Room for everything. Room for more than everything.",
+    "Pokédex bonus ×2.05.");
+  add("dex_4", "dex", "Sea Cottage Archive", 1.5e14, { dexCount: 140, upgrades: ["dex_3"] },
+    { type: "dexBonusMult", value: 2.05 }, "Bill backed up the whole Pokédex to a cottage by the sea. Twice.",
+    "Pokédex bonus ×2.05.");
 
-  // ---- Research milestones: global ×3 at Pokédex counts (the main late-game multiplier; keeps the
-  //      Champion at ~4–6 h with the producer curve as specified — see pacing note in ARCHITECTURE.md)
+  // ---- Research milestones: global ×1.5 at Pokédex counts (retuned from ×3 in the balance pass: ×3 each
+  //      (6561 total) made late income explode; ×1.5 each keeps Champion at ~5 h on the greedy sim)
   var milestones = [
-    [10, 1e3, "Oak's Field Notes", "OAK reads your notes aloud to his aides. They clap. The research moves faster."],
-    [25, 1e5, "Regional Survey Grant", "Somebody in an office approved funding. Nobody knows who. Nobody asks."],
-    [40, 1e7, "Pokémon Journal Feature", "Your photo is in the magazine. You are blinking in it."],
-    [55, 1e9, "Fan Club Membership", "The Chairman talks about his RAPIDASH for an hour. It is weirdly motivating."],
-    [70, 1e10, "Professors' Conference", "Every professor in the region agrees on one thing: you."],
-    [85, 1e11, "Kanto Research Network", "Every lab, every PC, every Lass's pink binder, all linked."],
-    [100, 1e12, "Oak's Life's Work", "OAK hands you a thick folder. It has your name on it. It was always going to."],
-    [120, 1e13, "The Complete Picture", "Almost every page is filled. The last few pages are slightly warm."]
+    [10, 1300, "Oak's Field Notes", "OAK reads your notes aloud to his aides. They clap. The research moves faster."],
+    [25, 430000, "Regional Survey Grant", "Somebody in an office approved funding. Nobody knows who. Nobody asks."],
+    [40, 6.2e6, "Pokémon Journal Feature", "Your photo is in the magazine. You are blinking in it."],
+    [55, 6e8, "Fan Club Membership", "The Chairman talks about his RAPIDASH for an hour. It is weirdly motivating."],
+    [70, 6.5e9, "Professors' Conference", "Every professor in the region agrees on one thing: you."],
+    [85, 7.9e10, "Kanto Research Network", "Every lab, every PC, every Lass's pink binder, all linked."],
+    [100, 9.7e11, "Oak's Life's Work", "OAK hands you a thick folder. It has your name on it. It was always going to."],
+    [120, 6e13, "The Complete Picture", "Almost every page is filled. The last few pages are slightly warm."]
   ];
+  var RESEARCH_VALUES = [1.55,1.55,1.5,1.5,1.5,1.5,1.5,1.5];
   milestones.forEach(function (m, i) {
     add("research_" + (i + 1), "dex", m[2], m[1], { dexCount: m[0], upgrades: i ? ["research_" + i] : [] },
-      { type: "allProducerMult", value: 3 }, m[3], "All producers ×3. Requires " + m[0] + " Pokédex entries.");
+      { type: "allProducerMult", value: RESEARCH_VALUES[i] }, m[3], "All producers ×" + RESEARCH_VALUES[i] + ". Requires " + m[0] + " Pokédex entries.");
   });
 
   // ---- Candy
-  add("candy_1", "candy", "Berry Patch", 3e6, { flags: ["daycare"] },
+  add("candy_1", "candy", "Berry Patch", 1.3e7, { flags: ["daycare"] },
     { type: "candyMult", value: 2 }, "The Day Care couple grows berries out back. The POKéMON share.",
     "Candy gains ×2.");
-  add("candy_2", "candy", "Candy Jar", 3e9, { badges: 4, upgrades: ["candy_1"] },
+  add("candy_2", "candy", "Candy Jar", 1.8e9, { badges: 4, upgrades: ["candy_1"] },
     { type: "candyMult", value: 2 }, "A big glass jar on Oak's desk. It is never empty and never full.",
     "Candy gains ×2.");
-  add("candy_3", "candy", "Sweet Tooth Program", 3e12, { badges: 7, upgrades: ["candy_2"] },
+  add("candy_3", "candy", "Sweet Tooth Program", 2.9e12, { badges: 7, upgrades: ["candy_2"] },
     { type: "candyMult", value: 3 }, "Silph research suggests POKéMON evolve faster when spoiled.",
     "Candy gains ×3.");
 
   // ---- Offline
-  add("sleeping_bag", "offline", "Sleeping Bag", 5e5, { badges: 2 },
+  add("sleeping_bag", "offline", "Sleeping Bag", 2.1e6, { badges: 2 },
     { type: "offlineCap", value: 14400 }, "Camp in the grass. The research keeps going while you sleep.",
     "Offline progress cap raised to 4 hours.");
-  add("exp_all", "offline", "EXP. ALL", 5e8, { badges: 4 },
+  add("exp_all", "offline", "EXP. ALL", 3e8, { badges: 4 },
     { type: "offlineMult", value: 1.5 }, "Everyone learns, even the ones who were not paying attention.",
     "Offline progress ×1.5.");
-  add("night_stay", "offline", "Pokémon Center Night Stay", 5e10, { flags: ["fly"], upgrades: ["sleeping_bag"] },
+  add("night_stay", "offline", "Pokémon Center Night Stay", 3.3e10, { flags: ["fly"], upgrades: ["sleeping_bag"] },
     { type: "offlineCap", value: 43200 }, "A bed upstairs that was always there. Nobody else ever uses it.",
     "Offline progress cap raised to 12 hours.");
 
   // ---- Flags
-  add("pokeflute", "flag", "POKé FLUTE", 2e8, { badges: 4 },
+  add("pokeflute", "flag", "POKé FLUTE", 1.2e8, { badges: 4 },
     { type: "flag", value: "pokeflute" }, "MR. FUJI gives you a flute. \"Play it gently. Everything sleeping wants to wake.\"",
     "Wakes the sleeping POKéMON on Route 12.");
 
   // ---- Encounter queue
-  add("queue_1", "queue", "Bigger Patch", 1e5, { badges: 1 },
+  add("queue_1", "queue", "Bigger Patch", 130000, { badges: 1 },
     { type: "encounterQueue", value: 1 }, "More grass, more room. More things standing in it.",
     "+1 encounter slot.");
-  add("queue_2", "queue", "Tall Grass Expansion", 1e9, { badges: 4, upgrades: ["queue_1"] },
+  add("queue_2", "queue", "Tall Grass Expansion", 6e8, { badges: 4, upgrades: ["queue_1"] },
     { type: "encounterQueue", value: 1 }, "The grass reaches the edge of the screen now.",
     "+1 encounter slot.");
-  add("queue_3", "queue", "Endless Meadow", 1e12, { badges: 7, upgrades: ["queue_2"] },
+  add("queue_3", "queue", "Endless Meadow", 9.7e11, { badges: 7, upgrades: ["queue_2"] },
     { type: "encounterQueue", value: 1 }, "The grass keeps going past the edge of the screen.",
     "+1 encounter slot.");
 
