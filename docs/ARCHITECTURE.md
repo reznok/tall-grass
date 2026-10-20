@@ -279,6 +279,37 @@ Tap = `1 × tapMult × (bike ? 5 : 1) + tapAddRate × rd/sec`.
 
 ---
 
+## Content additions
+
+Optional fields/keys added by the content agent (all additive; engine may ignore any of them).
+
+**Pokémon** — `evolvesToAlt: [134,135,136]` on Eevee only (valid evolution targets; `evolvesTo` is the default).
+
+**Routes** — extra route `saffron` (Saffron City: dojo Hitmonlee/Hitmonchan, Silph Lapras). Array is sorted by cost, so `ss_anne` (needs `cut`) comes after `celadon`. `route16_17_18` (Cycling Road) requires flag `bike`. `glitch_city.encounters` is `[]` by design. Every species 1–150 appears in at least one table; Mew (151) appears in none (truck secret only).
+
+**Producers**
+- `unlock.flags: [flag...]` — all must be set for the producer to be visible (`mart_shelf` → `["mart"]`, `daycare` → `["daycare"]`, `league` → `["victory_road"]`, `corrupt_*` → `["glitch"]`).
+- `act: 1 | 3` — `3` marks the Act 3 corrupted mirrors.
+- `corrupt_<id>` producers use `cost: { gb: N }` **instead of** `baseCost` (price = `cost.gb × costMult^owned`, paid in Glitch Bytes), output `rd` = normal × 1000, and add `gb: X` (Glitch Bytes/sec per unit) and `mirrorOf: "<id>"`.
+
+**Upgrades**
+- `requires.rdTotal` — minimum `state.rdTotal` to show (tap tiers, first encounter upgrade).
+- `group` — UI sorting hint: `producer|tap|ball|auto|encounter|dex|candy|offline|flag|queue`.
+- Value conventions: `*Mult` effects multiply; `tapAddRate`, `autoCatch`, `encounterQueue` values add up; `offlineCap` value is the new cap in seconds (take the max).
+- `research_1..8` are `allProducerMult ×3` at Pokédex counts 10/25/40/55/70/85/100/120. They are the main late-game multiplier. With the specified producer curve, a rough greedy sim puts Brock at ~5–8 min, Erika at ~2 h and Champion at ~4.8 h; without them Champion takes 12 h+.
+
+**Gyms**
+- `defeatQuote` — leader's line after losing.
+- `title` — "Gym Leader" | "Elite Four" | "Champion".
+- `requires.gyms: [gymId...]` — gyms that must already be beaten (Elite Four order: lorelei → bruno → agatha → lance → champion).
+- Gym ids are the city names (`pewter`, `cerulean`, … `viridian`) plus `lorelei`, `bruno`, `agatha`, `lance`, `champion`. They share names with some route ids but are a separate namespace, so key `storyShown` by trigger + subkey.
+
+**Story** (`TG.data.story`) — extra optional trigger keys: `first_upgrade`, `first_evolve`, `first_flee`, `offline_return`, `act: {2:[…],3:[…],4:[…]}`, `hall_of_fame` (corrupted list), `instability_crash`, `pull_cartridge`, `dex_0` (#000 entry), `debug_menu`. `route_unlock` and `badge` have an entry for every route/gym id. Line voice conventions: `"OAK: "` prefix = Oak, `"BLUE: "` = rival, lowercase-no-punctuation lines in Act 3/4 keys = the second voice. Helper `TG.data.storyCls(trigger, line)` returns a suggested `TG.log` cls (`oak|rival|glitch|sys`).
+
+**Events** — 4 more: `ditto_disguise` (freeBalls 10), `oldman_lesson` (candyRain 25), `nugget_bridge` (rdMult 3, 45 s, minAct 2), `pikachu_outbreak` (encounterMult 5, forceSpecies 25).
+
+---
+
 ## Engine additions
 
 Optional fields/APIs added by the engine (all additive). Late-game systems may rely on them.
