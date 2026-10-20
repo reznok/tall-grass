@@ -320,6 +320,17 @@ body.night .grass::after { opacity: .22; }
   background: var(--c0); border: 2px solid var(--c3); padding: 1px 3px;
   animation: blink .4s steps(2) 3, gone 0s linear 1.4s forwards;
 }
+.enc .tm { height: 4px; margin: 3px 8px 0; border: 1px solid var(--c3); background: var(--c0); overflow: hidden; }
+.enc .tm > i { display: block; height: 100%; width: 100%; background: var(--c2); transition: width .5s linear; }
+.enc.leaving .tm > i { background: var(--accent); }
+.enc .shoo {
+  position: absolute; top: -6px; left: -8px;
+  width: 30px; height: 30px; padding: 0;
+  font-size: 13px; line-height: 1; font-weight: bold;
+  background: var(--c0); color: var(--c3); border: 2px solid var(--c3); border-radius: 50%;
+  box-shadow: 1px 1px 0 var(--c3); cursor: pointer; z-index: 3; opacity: .85;
+}
+.enc .shoo:active { transform: translate(1px, 1px); box-shadow: none; }
 .enc .pips { display: flex; justify-content: center; gap: 3px; height: 8px; }
 .enc .pips i { width: 6px; height: 6px; border: 1px solid var(--c3); background: var(--c0); }
 .enc .pips i.x { background: var(--c3); }

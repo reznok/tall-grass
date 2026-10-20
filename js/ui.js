@@ -325,6 +325,14 @@
     const st = S();
     updateHint();
     if (encEls.size !== st.encounters.length) syncEncounters();
+    // wander-off timer bars
+    encEls.forEach(el => {
+      if (!el._tm || !el._enc) return;
+      const left = TG.wanderLeft(el._enc);
+      if (left == null) return;
+      const pct = Math.round(left / TG.WANDER_SECONDS * 100);
+      if (el._tm._w !== pct) { el._tm._w = pct; el._tm.style.width = pct + '%'; setClass(el, 'leaving', pct <= 20); }
+    });
     setText(refs.gBalls, TG.fmtInt(st.balls));
     const quick = !!st.flags.mart && st.balls < 25;
     setHidden(refs.gBuyBalls, !quick);
@@ -370,6 +378,12 @@
     if (e.target.closest && e.target.closest('[data-gag]')) return;
     const encEl = e.target.closest && e.target.closest('.enc');
     e.preventDefault();
+    if (encEl && e.target.closest('.shoo')) {
+      // explicit shoo: get rid of one you don't want, balls or not
+      const sh = TG.shooUid(Number(encEl.dataset.uid));
+      if (sh.ok) UI.floatText(xPct, yPct, '+' + TG.fmt(sh.gain), '');
+      return;
+    }
     if (encEl) {
       const res = TG.throwBallUid(Number(encEl.dataset.uid));
       if (!res.ok && res.reason === 'balls') {
@@ -438,12 +452,15 @@
     const sp = TG.species(enc.id);
     const pips = h('div', { class: 'pips' });
     if (!enc.noFlee) for (let i = 0; i < 3; i++) pips.appendChild(h('i'));
+    const tm = enc.noFlee ? null : h('div', { class: 'tm', title: 'Time until it wanders off' }, h('i'));
     const el = h('div', { class: 'enc' + (enc.shiny ? ' shiny' : ''), 'data-uid': enc.uid, role: 'button', 'aria-label': 'Throw a ball at ' + (sp ? sp.name : '???') },
       h('span', { class: 'bang', text: '!' }),
       cv,
       h('span', { class: 'nm', text: UI.corrupt(sp ? sp.name.toUpperCase() : '???') }),
       pips);
-    el._cv = cv; el._enc = enc; el._pips = pips;
+    if (tm) el.appendChild(tm);
+    if (!enc.noFlee) el.appendChild(h('button', { class: 'shoo', type: 'button', 'aria-label': 'Shoo it away', title: 'Shoo', text: '✕' }));
+    el._cv = cv; el._enc = enc; el._pips = pips; el._tm = tm ? tm.firstChild : null;
     el._pos = pickSpot();
     el.style.left = el._pos.x + '%';
     el.style.top = el._pos.y + '%';

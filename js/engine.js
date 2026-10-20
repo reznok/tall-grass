@@ -831,6 +831,13 @@
     TG.emit('encounter', { type: 'shoo', res: res });
     return res;
   };
+  TG.WANDER_SECONDS = WANDER_SECONDS;
+  // seconds until this encounter wanders off (null if it never does)
+  TG.wanderLeft = function (enc) {
+    if (!enc || enc.noFlee) return null;
+    var t = enc.t == null ? S.stats.playtime : enc.t;
+    return Math.max(0, WANDER_SECONDS - (S.stats.playtime - t));
+  };
   TG.shooUid = function (uid) {
     for (var i = 0; i < S.encounters.length; i++) if (S.encounters[i].uid === uid) return TG.shoo(i);
     return { ok: false, reason: 'none' };

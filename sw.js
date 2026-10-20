@@ -4,7 +4,7 @@
  * can't hand back stale JS. Bump CACHE whenever the CORE list changes; old caches are deleted
  * on activate.
  */
-var CACHE = 'tallgrass-v7';
+var CACHE = 'tallgrass-v8';
 var CORE = [
   './', './index.html', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './css/style.css',
   './js/numbers.js', './js/sprite.js', './js/audio.js',
