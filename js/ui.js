@@ -652,7 +652,7 @@
     // producers
     refs.tProds.innerHTML = '';
     prodRows = [];
-    const prods = (TG.data.producers || []).filter(p => TG.producerVisible(p));
+    const prods = (TG.data.producers || []).filter(p => TG.producerVisible(p) && TG.producerCurrency(p.id) !== 'gb'); // ▓ producers live in the Glitch tab
     for (const p of prods) {
       const btn = h('button', { class: 'btn', type: 'button' }, h('span', { text: 'BUY' }), h('small', { text: '' }));
       const own = h('span', { class: 'own', text: '' });
@@ -670,13 +670,13 @@
     }
     if (!prods.length) refs.tProds.appendChild(h('p', { class: 'empty', text: 'Nobody wants to help yet. Keep tapping.' }));
     // next locked producer teaser
-    const next = (TG.data.producers || []).find(p => !TG.producerVisible(p) && (p.act || 1) <= Math.max(2, st.act));
+    const next = (TG.data.producers || []).find(p => !TG.producerVisible(p) && (p.act || 1) <= Math.max(2, st.act) && TG.producerCurrency(p.id) !== 'gb');
     if (next) refs.tProds.appendChild(h('div', { class: 'prod locked' }, h('div', null, h('span', { class: 'nm', text: '??? ' }), h('span', { class: 'dim', text: unlockHint(next) }))));
 
     // upgrades
     refs.tUpgs.innerHTML = '';
     upgBtns = [];
-    const ups = (TG.data.upgrades || []).filter(u => TG.upgradeAvailable(u)).sort((a, b) => costRD(a.cost) - costRD(b.cost)).slice(0, 12);
+    const ups = (TG.data.upgrades || []).filter(u => TG.upgradeAvailable(u) && !TG.costParts(u.cost).gb).sort((a, b) => costRD(a.cost) - costRD(b.cost)).slice(0, 12);
     for (const u of ups) {
       const cost = h('span', { class: 'cost', text: fmtCost(u.cost) });
       const b = h('button', { class: 'btn upg', type: 'button', title: u.flavor || '' },

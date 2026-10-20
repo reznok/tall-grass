@@ -727,7 +727,7 @@
     if (!silent) {
       TG.fire('first_catch');
       if (enc.shiny) TG.fire('shiny');
-      if (isNew && sp) TG.log('New Pokédex entry: ' + sp.name.toUpperCase() + ' (#' + String(enc.id).padStart(3, '0') + ')', 'sys');
+      if (isNew && sp) TG.log('New Pokédex entry: ' + sp.name.toUpperCase() + ' (#' + String(sp.no || enc.id).padStart(3, '0') + ')', 'sys');
     }
     if (isNew) { checkDexMilestones(); TG.emit('dex', { id: enc.id, caught: true }); }
     if (enc.id === 151 && !S.flags.mew) { TG.setFlag('mew'); TG.fire('mew'); recompute(); }

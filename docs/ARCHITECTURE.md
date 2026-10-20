@@ -340,3 +340,35 @@ Optional fields/APIs added by the engine (all additive). Late-game systems may r
 - Sprite shades: `'1'→--c1`, `'2'→--c2`, `'3'→--c3`, `'.'` transparent (`--c0` is the background). Extra palette `'light'` (1→c0, 2→c1, 3→c2) is used for the grass texture.
 
 **UI (`TG.ui`)**: `init, showTab(name), markDirty(...tabs), refresh(), toast(text, ms), modal({title, lines|text|node, buttons:[{label, primary, danger, onClick}]}), confirm(text, onYes, yesLabel), corrupt(text, intensity?), glitchIntensity(), setPalette(p), repaint(), playCredits(lines), toggleDebug(), floatText(xPct, yPct, text, cls)`. `#tab-glitch` / `#tab-sram` sections are empty and owned by the systems. Set `document.body.dataset.paletteLock = '1'` to stop `ui.js` from overriding `data-palette` (e.g. while the glitch palette is forced). CSS: `body.glitch-1..3`, `body.crash`, `body.night`, `body.reduce-motion`, `body[data-act]`.
+
+---
+
+## Late-game additions
+
+Acts 3–4, prestige and the ending live in `js/systems/glitch.js`, `js/systems/sram.js` and `js/data/glitch.js` (loaded after `data/story.js`, before `engine.js`). All fields are created on load by each system's `init()` / `load` handler, so old saves migrate without a version bump.
+
+**State (`TG.state`) extra fields**
+- `gbLifetime` — Glitch Bytes ever earned this run (ticks, offline, grants). Drives Act 4.
+- `glitchDex: {id: 1}` — glitch dex entries registered this run (`missingno`, `g153` … `g183`).
+- `glitch: {nextWhisperAt, nextHintAt, crashes, wild, dup}` — whisper/hint timers (ms), crash count, glitch encounters caught in the wild, the ×128 duplication record `{id, from, to}`.
+- `prodOrder: [producerId]` — first-purchase order of producers (the "6th item"); older saves get data order of owned producers.
+- `battery` (0–100) and `sram: {startedAt, lowFired, nextFlickerAt}` — Save Battery (meaningful once flag `sram` is set).
+- `prestige` gains `seed` (save-stable seed for procedural glitch dex names/sprites, survives prestige), `glitchEver: {id: 1}` (entries registered in any run; the ending needs all 32), `pulls`, `lastGain`, `lastMode` (`battery|full|half`), `lastAt`, `ended`.
+- Flags: `glitch` (Act 3, MissingNo. caught), `sram` (Act 4), `prestiged`, `gbc` (harmless, set on prestige), `ended`.
+- `S.dex` may contain non-numeric ids (`missingno`, `gNNN`) for glitch species seen/caught in the wild; the engine's dex bonus ignores them (not in `TG.data.pokemon`).
+
+**Data — `TG.data.glitch`** (`js/data/glitch.js`): `total` (32), `fixed` (#152 MISSINGNO., #153 'M, #154 h POKé, #155 PkMn, #156 ゥ), `nameSymbols`, `types`, `entryBits/entryEnds`, `upgrades`. Glitch upgrades use the normal upgrade schema with `cost: {gb}`, `requires.flags: ["glitch"]`, plus `glitch: true` and `instability: N` (added on purchase); they are appended to `TG.data.upgrades` so the engine buys them and aggregates their effects (`glitchMult`, `instabilityDecay`, `allProducerMult`, `catchRateMult`, `dexBonusMult`, `encounterMult`). `ui.js` keeps ▓-priced producers and upgrades out of the Town tab.
+
+**Glitch species**: `TG.systems.glitch.species(id)` resolves `missingno` and `g153…g183` (objects with `no`, `name`, `types`, `catchRate`, `baseValue`, `entry`, `glitch: true`, `family: null`). Generated 16×16 grids are registered at runtime as `TG.sprites[id]`. Glitch City's `encounters` table is filled with them at init (weight ∝ 1/(1+i)^0.6).
+
+**Act 3 rules**: on the coast with `surf+champion+oldman` the next spawn is MISSINGNO. (catchRate 0.3, `noFlee`); without `oldman` the log hints every 90–180 s. Catching it: 6th producer ×128 (cap 1e6), +▓128, flag `glitch`, act 3, Glitch tab, palette locked to `glitch` (`body.dataset.paletteLock`; released on prestige). Instability 0–100: +0.5 per corrupted producer bought (max +6 per purchase), +upgrade `instability`, +3 per glitch dex registration, +1 per wild glitch catch, +0.25/s in Glitch City; decays `0.2 + effects.instabilityDecay` per second. ≥10/40/75 → `body.glitch-1/2/3`; 100 → crash (3 s overlay, −10% RD, instability 50). Glitch dex registration costs `50 × 2.2^(registered−1)` ▓; `rdMult() = 1 + 0.01 × registered`. Wild glitch catches pay `5 + 2 s of ▓/s`. A `story.glitch_whisper` line every 2–4 min.
+
+**Act 4 / prestige rules**: Act 4 at `gbLifetime ≥ 1e7` (greedy sim ≈ 2 h after MissingNo., ~3 h for a real player). Battery drains 100% over 8 h online; offline (and hidden-tab) time drains at 50%. ≤15%: `story.battery_low`, `body.bat-low`, a single slow dim (`body.bat-flicker`) every 25–50 s (none with reduced motion). 0%: `story.battery_dead`, unskippable modal, then prestige. Rare Candy gain = `floor((log10(rdLifetime) − 12) × 3)` (min 1 once Act 4 is reached) + `floor(glitchDex / 5)`; half (min 1) when pulling the cartridge in Act 3. Rare Candy multiplies RD (engine `mults.rareCandy`) and ▓ output (effect source on `glitchMult`). Prestige keeps name, settings, stats, `rdLifetime`, `prestige`, `titleTaps`, dex seen-markers, flags `gbc/prestiged/ended`; the start story is skipped and `pull_cartridge`/`prestige_done` fire. After the first prestige: "Pull the cartridge" (SRAM tab in Act 4 = full candy, Glitch tab in Act 3 = half), Pokédex `#000` cell (`story.dex_0`), battery icons in the header. Ending: `prestige.count ≥ 10` and all 32 glitch entries in `glitchEver` → `story.ending` slow-text overlay on `#credits` (`.credits.ending`), flag `ended`, play continues.
+
+**Events emitted**: `glitch` (`{type:'act3', dup}` | `{type:'crash', lost}` | `{type:'act4'}`), `glitchdex` (`{id}`), `prestige` (`{count, gain, mode}`), `credits_done` (after the ending overlay).
+
+**APIs**: `TG.systems.glitch` — `species, rdMult, list, total, dexCount, everCount, registerCost, register(id), addInstability(v), crash(), level(), enterAct3(), checkDoor(), syncPalette(), markDirty()`. `TG.systems.sram` — `prestige(mode?)` (wired to `TG.prestige()`), `pullCartridge(), canPullFull(), canPullHalf(), rareCandyGain(mode), playEnding(), config`. 
+
+**DOM owned by systems**: `#tab-glitch`, `#tab-sram`, `#hdr-gb` (▓ in the header), `#hdr-pbats` (prestige batteries), `#l-hof` (Hall of Fame in the Lab tab, shown after Champion; corrupted extra entries after Act 3), `#dex-000`, `.crash-ov`. Photosensitivity: nothing flashes faster than 3 Hz (crash glyphs re-scramble at 2.5 Hz, `body.glitch-3::after` noise slowed to 2.5 Hz); with reduced motion the crash overlay is static and `body.crash` inversion is skipped.
+
+**Dev shortcuts** (console only, not in the UI): `TG.dev.champion()`, `.coast(oldman=true)`, `.act3()`, `.act4()`, `.battery(pct)`, `.instability(v)`, `.gb(n)`, `.prestigeCount(n)`, `.glitchAll()`, `.ending()`.

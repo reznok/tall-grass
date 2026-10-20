@@ -612,7 +612,7 @@ body.glitch-3::after {
   pointer-events: none;
   opacity: .12;
   background-image: repeating-linear-gradient(0deg, var(--c3) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, transparent 0 7px, var(--c2) 7px 8px);
-  animation: noise .3s steps(4) infinite;
+  animation: noise 1.2s steps(3) infinite; /* <= 2.5 Hz: photosensitivity */
 }
 body.crash #app { filter: invert(1) contrast(2); }
 
@@ -629,3 +629,82 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after 
   .grass.rustle, .enc.wobble, .truck.push, .grass-hint, .tabbtn.new::after, .enc.shiny canvas,
   body[class*="glitch-"] *, body.glitch-3::after { animation: none !important; }
 }
+
+/* ------------------------------------------------------------ late game: Act 3 glitch tab, Act 4 SRAM (systems/*.js) */
+.hdr-gb { font-size: 11px; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pbats { display: flex; flex-wrap: wrap; gap: 3px 4px; justify-content: flex-end; margin-top: 4px; max-width: 76px; margin-left: auto; align-items: center; }
+.pbat { width: 9px; height: 6px; border: 1px solid var(--c0); position: relative; background: var(--c2); }
+.pbat::after { content: ""; position: absolute; right: -3px; top: 1px; width: 2px; height: 2px; background: var(--c0); }
+.pbat-n { font-size: 9px; line-height: 1; }
+
+.gl-head .gl-big { font-family: var(--font-px); font-size: 18px; margin: 2px 0 4px; word-break: break-all; }
+.gl-sub { font-size: 12px; opacity: .85; }
+.gl-inst { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 11px; font-weight: bold; }
+.gl-inst > span { font-family: var(--font-px); font-size: 8px; }
+.bar.inst > i { background: var(--c3); transition: width .2s linear; }
+.gl-note { margin: 6px 0 0; font-size: 12px; }
+.gl-pull { margin-top: 10px; border-top: 2px dotted var(--c2); padding-top: 8px; }
+.gl-pull p { margin: 0 0 8px; font-size: 12px; }
+.gl-inst-cost { font-style: italic; opacity: .8; }
+.gl-grid { margin-top: 8px; }
+.gl-cell.ever:not(.caught) { border-style: dashed; border-color: var(--c3); }
+.gl-detail { margin-top: 8px; }
+
+.hof { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.hof li { display: flex; gap: 10px; padding: 2px 0; border-bottom: 1px dotted var(--c2); }
+.hof li:last-child { border-bottom: 0; }
+.hof .hof-no { font-family: var(--font-px); font-size: 9px; min-width: 3.4em; padding-top: 3px; }
+.hof .hof-head { font-weight: bold; }
+.hof .hof-glitch { font-weight: bold; letter-spacing: .5px; }
+
+.dex-cell.dex0 { border-style: dashed; border-color: var(--c3); }
+
+.sr-head { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start; }
+.sr-head canvas#sr-cart { width: 96px; height: 96px; background: var(--c1); border: 2px solid var(--c3); }
+.sr-sub { margin: 4px 0 0; font-size: 12px; }
+.sr-bat { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.sr-bat canvas { width: 32px; height: 32px; flex: none; }
+.bar.battery { height: 16px; }
+.bar.battery > i { background: var(--c2); transition: width 1s linear; }
+.bar.battery.low > i { background: var(--c3); }
+.hexdump {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+  background: var(--c3);
+  color: var(--c0);
+  padding: 8px;
+  border-radius: 3px;
+  min-height: 120px;
+}
+.sr-rc p { margin: 4px 0; }
+#sr-pull { margin-top: 10px; }
+
+/* crash: full-screen scrambled overlay (glyphs re-scramble at most 2.5×/s, static with reduced motion) */
+.crash-ov {
+  position: fixed; inset: 0;
+  z-index: 300;
+  background: var(--c3);
+  color: var(--c0);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  cursor: wait;
+}
+.crash-ov .crash-noise { position: absolute; inset: 0; margin: 0; font-family: var(--font-mono); font-size: 13px; line-height: 15px; opacity: .55; white-space: pre; }
+.crash-ov .crash-msg { position: relative; font-family: var(--font-px); font-size: 11px; background: var(--c3); border: 2px solid var(--c0); padding: 10px 12px; text-align: center; }
+
+/* low save battery: a single slow dim, a few times a minute (never a strobe) */
+body.bat-flicker #app { opacity: .55; transition: opacity .25s; }
+body.bat-low .hdr { border-bottom-style: dashed; }
+
+/* ending: slow text over the credits layer */
+.credits.ending { display: flex; align-items: center; justify-content: center; background: #101010; color: #e8e8e8; }
+.credits.ending .ending-text { max-width: 520px; padding: 24px; text-align: center; font-size: 15px; line-height: 2; }
+.credits.ending .eln { opacity: 0; transition: opacity 1.6s ease; min-height: 1em; }
+.credits.ending .eln.on { opacity: 1; }
+.credits.ending .eln:first-child { font-family: var(--font-px); font-size: 12px; }
+body.reduce-motion .credits.ending .eln { transition: none; }
+@media (prefers-reduced-motion: reduce) { .credits.ending .eln { transition: none; } body.bat-flicker #app { opacity: 1; } }
