@@ -36,6 +36,8 @@
   var genSeed = null;
   var doorPending = false;
   var crashing = false;
+  var warned = false;            // instability warning fired for the current climb
+  var WARN_AT = 85, WARN_RESET = 70;
   var lastLevel = -1;
   var lastUi = 0, lastSlow = 0;
   var dirty = { glitch: true, hof: true };
@@ -470,6 +472,16 @@
         var rise = r && r.special === 'glitch_city' ? CITY_RISE : 0;
         S.instability = clamp(S.instability + (rise - decay) * dt, 0, 100);
       }
+      // telegraph the crash: one warning per climb past 85%
+      if (!pre && !crashing) {
+        if (S.instability >= WARN_AT && !warned) {
+          warned = true;
+          var wl = (TG.data.story && TG.data.story.instability_warn) || [];
+          if (wl.length) TG.log(corrupt(wl[(Math.random() * wl.length) | 0], 0.05), 'glitch');
+          if (TG.ui && TG.ui.toast) TG.ui.toast('INSTABILITY ' + Math.floor(S.instability) + '%. At 100% the game crashes and 10% of your RD is lost.', 4000);
+          sfx('glitch');
+        } else if (S.instability < WARN_RESET) warned = false;
+      }
     } else if (S.instability > 0 && !S.flags.glitch) {
       S.instability = Math.max(0, S.instability - BASE_DECAY * 5 * dt);
     }
@@ -519,7 +531,7 @@
     if (!refs.hdrGb) return;
     var show = !!S.flags.glitch;
     setHidden(refs.hdrGb, !show);
-    if (show) setText(refs.hdrGb, '▓' + fmt(S.gb) + (TG.rates.gb > 0 ? '  +' + fmt(TG.rates.gb) + '/s' : ''));
+    if (show) setText(refs.hdrGb, '▓' + fmt(S.gb) + (TG.rates.gb > 0 ? '  +' + fmt(TG.rates.gb) + '/s' : '') + (S.instability >= 40 ? '  ⚠' + Math.floor(S.instability) + '%' : ''));
   }
 
   // ------------------------------------------------------------ Glitch tab
@@ -728,8 +740,10 @@
   function updateTab() {
     if (!refs.gb) return;
     setText(refs.gb, '▓' + fmt(S.gb));
-    setText(refs.rate, '+▓' + fmt(TG.rates.gb) + '/s');
-    setText(refs.life, 'lifetime ▓' + fmt(S.gbLifetime));
+    setText(refs.rate, TG.rates.gb > 0 ? '+▓' + fmt(TG.rates.gb) + '/s' : 'no ▓ income: buy a CORRUPTED helper below, or catch things in GLITCH CITY');
+    var sr0 = TG.systems.sram;
+    var depth = (!S.flags.sram && sr0 && sr0.config) ? Math.min(99, Math.floor(100 * Math.log10(Math.max(1, S.gbLifetime / MISSINGNO_GB)) / Math.log10(sr0.config.SRAM_GB / MISSINGNO_GB))) : 0;
+    setText(refs.life, 'lifetime ▓' + fmt(S.gbLifetime) + (depth >= 5 ? ' · something below is waking (' + depth + '%)' : ''));
     var pct = Math.round(S.instability);
     if (refs.instFill._w !== pct) { refs.instFill._w = pct; refs.instFill.style.width = pct + '%'; }
     setText(refs.instV, pct + '%');
@@ -867,7 +881,11 @@
       TG.on('tick', onTick);
       TG.on('load', onLoad);
       TG.on('offline', onOffline);
-      TG.on('flag', function () { dirty.glitch = true; dirty.hof = true; });
+      TG.on('flag', function (name) {
+        dirty.glitch = true; dirty.hof = true;
+        // talked to the Old Man while already standing on the coast: open the door now, not on the next visit
+        if (name === 'oldman') checkDoor(false);
+      });
       TG.on('dex', function () { dirty.hof = true; });
       TG.on('act', function () { dirty.glitch = true; });
       TG.on('tabshow', function (name) {

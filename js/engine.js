@@ -1075,7 +1075,7 @@
       recompute();
     }
     // the night lines wait until the player has caught something, so they don't bury the intro
-    if (night && S.stats.catches > 0 && !S.storyShown.night) TG.fire('night');
+    if (night && TG.mults.dexCount > 0 && !S.storyShown.night) TG.fire('night');
     // events
     if (S.activeEvent && t >= S.activeEvent.endsAt) endEvent();
     if (!S.activeEvent && t >= S.nextEventAt) {

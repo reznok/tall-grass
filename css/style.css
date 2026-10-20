@@ -459,6 +459,7 @@ body.night .grass::after { opacity: .22; }
 .route:last-child, .gym:last-child { border-bottom: 0; }
 .route .nm, .gym .nm { font-weight: bold; }
 .route .flav, .gym .flav { font-size: 11px; font-style: italic; opacity: .8; }
+.map-sub { margin: 14px 0 0; padding-top: 8px; border-top: 2px solid var(--c3); }
 .route .rtypes { font-size: 10px; opacity: .8; text-transform: uppercase; letter-spacing: .3px; }
 .route .btn, .gym .btn { grid-row: 1 / span 3; grid-column: 2; min-width: 96px; flex-direction: column; gap: 0; line-height: 1.2; font-size: 12px; }
 .route.here { background: var(--c1); margin: 0 -8px; padding-left: 8px; padding-right: 8px; }

@@ -115,7 +115,9 @@
     }
     // Oak's intro already happened. Keep a few once-per-game story beats.
     fresh.storyShown.start = story('start').length;
-    ['ending', 'dex_0', 'debug_menu'].forEach(function (k) { if (old.storyShown && old.storyShown[k]) fresh.storyShown[k] = old.storyShown[k]; });
+    // ...and the tutorial nudges: a returning player already knows how to tap, throw and hire
+    ['ending', 'dex_0', 'debug_menu', 'first_tap', 'first_encounter', 'first_catch', 'first_producer', 'first_upgrade',
+      'first_flee', 'first_evolve', 'town_open', 'map_open'].forEach(function (k) { if (old.storyShown && old.storyShown[k]) fresh.storyShown[k] = old.storyShown[k]; });
     fresh.log = [{ t: t, text: '— SAVE FILE ' + fresh.prestige.count + ' —', cls: 'sys' }];
     fresh.lastSave = t; fresh.lastTick = t;
     deathShown = false;
@@ -156,6 +158,7 @@
     S.battery = 100;
     S.sram.startedAt = now();
     S.sram.lowFired = false;
+    S.sram.warn5 = S.sram.warn1 = false;
     TG.fire('sram_appear');
     if (S.act < 4) TG.setAct(4);
     TG.unlockTab('sram');
@@ -176,10 +179,12 @@
     if (!lines.length) lines = ['The internal battery has run dry.', 'SAVE FILE DESTROYED.'];
     if (!TG.ui || !TG.ui.modal) { prestige('battery'); return; }
     var gain = rareCandyGain('battery');
+    var dying = TG.state;
     TG.ui.modal({
       title: 'SAVE BATTERY',
       lines: lines.map(TG.fmtLine).concat(['', '+' + gain + ' RARE CANDY']),
-      buttons: [{ label: 'CONTINUE', primary: true, onClick: function () { prestige('battery'); } }]
+      // the modal may have queued behind another one (e.g. PULL THE CARTRIDGE): only reset the save that died
+      buttons: [{ label: 'CONTINUE', primary: true, onClick: function () { if (TG.state === dying) prestige('battery'); } }]
     });
   }
 
@@ -202,7 +207,18 @@
   function perSecond(t) {
     if (S.flags.glitch && !S.flags.sram && S.gbLifetime >= SRAM_GB) enterAct4();
     if (S.flags.sram) {
-      if (S.battery <= LOW && !S.sram.lowFired) { S.sram.lowFired = true; TG.fire('battery_low'); }
+      if (S.battery <= LOW && !S.sram.lowFired) { S.sram.lowFired = true; TG.fire('battery_low'); if (TG.ui) TG.ui.toast('SAVE BATTERY ' + Math.ceil(S.battery) + '%. When it runs dry this save resets.', 4500); }
+      // telegraph the reset twice more on the way down
+      if (S.battery <= 5 && S.battery > 0 && !S.sram.warn5) {
+        S.sram.warn5 = true;
+        TG.fire('battery_warn');
+        if (TG.ui) TG.ui.toast('SAVE BATTERY 5% · about ' + TG.fmtTime(S.battery / DRAIN) + ' of play left.', 5000);
+      }
+      if (S.battery <= 1 && S.battery > 0 && !S.sram.warn1) {
+        S.sram.warn1 = true;
+        TG.log('SAVE BATTERY 1%.', 'glitch');
+        if (TG.ui) TG.ui.toast('SAVE BATTERY 1% · about ' + TG.fmtTime(S.battery / DRAIN) + ' left.', 5000);
+      }
       setClass(document.body, 'bat-low', S.battery <= LOW && S.battery > 0);
       if (S.battery <= LOW && S.battery > 0) {
         if (!S.sram.nextFlickerAt || t >= S.sram.nextFlickerAt) {
@@ -285,10 +301,25 @@
       refs.pbats.id = 'hdr-pbats';
       side.appendChild(refs.pbats);
     }
+    refs.hbat = document.getElementById('hdr-bat');
+    if (!refs.hbat) {
+      refs.hbat = el('div', 'hdr-bat');
+      refs.hbat.id = 'hdr-bat';
+      refs.hbat.hidden = true;
+      side.appendChild(refs.hbat);
+    }
     renderHeader();
   }
   function renderHeader() {
     if (!refs.pbats || !S) return;
+    if (refs.hbat) {
+      var on = !!S.flags.sram;
+      setHidden(refs.hbat, !on);
+      if (on) {
+        setText(refs.hbat, 'SAVE ' + (S.battery >= 10 ? Math.ceil(S.battery) : S.battery.toFixed(1)) + '%');
+        setClass(refs.hbat, 'low', S.battery <= LOW);
+      }
+    }
     var n = S.prestige.count;
     var sig = String(n);
     if (refs.pbats._sig === sig) return;
@@ -514,7 +545,13 @@
       perSecond(now());
       return TG.state.act;
     },
-    battery: function (pct) { var st = TG.state; st.battery = Math.max(0, Math.min(100, +pct)); if (st.battery > LOW) st.sram.lowFired = false; return st.battery; },
+    battery: function (pct) {
+      var st = TG.state; st.battery = Math.max(0, Math.min(100, +pct));
+      if (st.battery > LOW) st.sram.lowFired = false;
+      if (st.battery > 5) st.sram.warn5 = false;
+      if (st.battery > 1) st.sram.warn1 = false;
+      return st.battery;
+    },
     instability: function (v) { TG.state.instability = Math.max(0, Math.min(100, +v)); return TG.state.instability; },
     gb: function (n) { TG.state.gb += +n || 0; TG.state.gbLifetime += +n || 0; return TG.state.gb; },
     prestigeCount: function (n) { TG.state.prestige.count = +n || 0; return n; },

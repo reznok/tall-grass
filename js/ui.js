@@ -304,7 +304,7 @@
   // the hint under the grass follows what the player still has to learn (or is stuck on)
   function hintText(st) {
     const enc = st.encounters.length;
-    const caught = (st.stats.catches || 0) > 0 || TG.mults.dexCount > 0;
+    const caught = TG.mults.dexCount > 0; // this run (stats survive prestige)
     if (enc && st.balls < 1 && !(TG.effects.autoCatch > 0 && TG.rates.balls > 0)) {
       return st.flags.mart ? 'OUT OF BALLS · TAP +10 TO BUY' : 'NO BALLS · TAP ONE TO SHOO IT';
     }
@@ -889,12 +889,25 @@
     refs.mRoutes.innerHTML = '';
     routeBtns = [];
     let hiddenCount = 0;
-    for (const r of TG.data.routes || []) {
+    // once the region fills up, put new areas first and visited ones under a divider, so the next
+    // unlock (and the gyms below) aren't buried under 40 rows of GO buttons on a phone
+    const all = TG.data.routes || [];
+    const nOwned = all.filter(r => st.routes[r.id]).length;
+    const split = nOwned > 6;
+    const order = split ? all.filter(r => !st.routes[r.id]).concat(all.filter(r => st.routes[r.id])) : all;
+    let dividerDone = !split;
+    for (const r of order) {
       const owned = !!st.routes[r.id];
       const meets = TG.meets(r.requires);
       const frontier = (r.requires && r.requires.routes || []).every(x => st.routes[x]);
       if (!owned && !meets && (!frontier || (r.act || 1) > Math.max(2, st.act))) { hiddenCount++; continue; }
       const here = st.currentRoute === r.id;
+      if (owned && !dividerDone) {
+        dividerDone = true;
+        if (hiddenCount) refs.mRoutes.appendChild(h('p', { class: 'empty', text: '… ' + hiddenCount + ' more area' + (hiddenCount > 1 ? 's' : '') + ' beyond.' }));
+        hiddenCount = 0;
+        refs.mRoutes.appendChild(h('h3', { class: 'map-sub', text: 'VISITED (' + nOwned + ')' }));
+      }
       let btn;
       if (owned) {
         btn = h('button', { class: 'btn' + (here ? ' on' : ''), type: 'button', disabled: here }, here ? 'HERE' : 'GO');
@@ -944,7 +957,7 @@
         btn = h('span', { class: 'dim', text: league ? 'DEFEATED' : '★' });
       }
       const title = g.name + (g.leader ? ' — ' + g.leader : '');
-      target.appendChild(h('div', { class: 'gym' + (stt.beaten ? ' beaten' : '') + (stt.meets ? '' : ' locked') },
+      target.appendChild(h('div', { class: 'gym' + (stt.beaten ? ' beaten' : '') + (stt.meets || stt.beaten ? '' : ' locked') },
         h('div', { class: 'nm', text: UI.corrupt(title) }),
         btn,
         h('div', { class: 'flav', text: [g.title, g.badge].filter(Boolean).join(' · ') || (bi === 13 ? 'Champion' : 'Elite Four') }),
