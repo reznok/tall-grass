@@ -293,11 +293,21 @@
   // the "6th item" duplication
   function sixthProducer() {
     var normal = function (id) { var p = TG.producer(id); return p && num(p.act, 1) < 3 && TG.producerCurrency(id) !== 'gb'; };
+    var makesRd = function (id) { var p = TG.producer(id); return p && num(p.rd, 0) > 0; };
     var order = (S.prodOrder || []).filter(function (id) { return normal(id) && (S.producers[id] || 0) > 0; });
-    if (order.length >= 6) return order[5];
     var owned = (TG.data.producers || []).filter(function (p) { return normal(p.id) && (S.producers[p.id] || 0) > 0; }).map(function (p) { return p.id; });
-    if (owned.length >= 6) return owned[5];
-    return order[order.length - 1] || owned[owned.length - 1] || null;
+    var pick = order.length >= 6 ? order[5] : owned.length >= 6 ? owned[5] : (order[order.length - 1] || owned[owned.length - 1] || null);
+    // The joke only lands if the duplicated "item" actually makes Research Data. If the 6th
+    // slot is a Day Care / Mart shelf, duplicate the strongest RD producer instead.
+    if (pick && !makesRd(pick)) {
+      var best = null, bestOut = 0;
+      owned.forEach(function (id) {
+        var p = TG.producer(id), out = num(p.rd, 0) * (S.producers[id] || 0);
+        if (out > bestOut) { bestOut = out; best = id; }
+      });
+      if (best) pick = best;
+    }
+    return pick;
   }
 
   function enterAct3() {
