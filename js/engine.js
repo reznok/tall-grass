@@ -39,6 +39,7 @@
   // and a hand-thrown catch at least a few seconds of it (auto-catch keeps the plain species value)
   var ACTIVE_TAP_PCT = 0.02, ACTIVE_TAP_PCT_BIKE = 0.04;
   var CATCH_SECONDS_NEW = 8, CATCH_SECONDS_DUPE = 3;
+  var DUPE_VALUE = 0.3;            // a repeat catch pays this fraction of the species value (candy is its real reward)
   var DEX_MILESTONES = [10, 25, 50, 100, 150, 151];
   var STORY_CLS = {
     rival: 'rival', rocket: 'rival',
@@ -755,7 +756,7 @@
     d.seen = true;
     if (enc.shiny) { d.shiny = (d.shiny || 0) + 1; S.stats.shinies++; }
     if (isNew || enc.shiny) recompute();
-    var per = num(sp && sp.baseValue, 10) * TG.mults.global;
+    var per = num(sp && sp.baseValue, 10) * TG.mults.global * (isNew || enc.evolved ? 1 : DUPE_VALUE);
     if (manual && !enc.evolved) per = Math.max(per, (isNew ? CATCH_SECONDS_NEW : CATCH_SECONDS_DUPE) * TG.rates.rd);
     var gain = per * (enc.shiny ? 10 : 1) * weight;
     addRD(gain);
