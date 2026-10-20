@@ -24,7 +24,16 @@
   var BASE_TAP_ENCOUNTER = 0.2;
   var BASE_QUEUE = 5;
   var MAX_FLEE_MISSES = 3;
-  var DRIP_SECONDS = 20, DRIP_CAP = 10;
+  var DRIP_SECONDS = 15, DRIP_CAP = 10;
+  var DRIP_SECONDS_STUCK = 6;      // drip faster when the queue is full and the player has no balls
+  var WANDER_SECONDS = 75;         // an un-thrown-at encounter wanders off after this long in the grass
+  var SHOO_LINES = [
+    'You have no balls. You wave your arms. It leaves.',
+    'You throw a rock. It is not a Poké Ball. It leaves anyway.',
+    'You shout. It looks at you. It leaves on its own terms.',
+    'You make a note instead. The note is "it left".',
+    'It wanders off. You pretend that was the plan.'
+  ];
   var BALL_PRICE = 20;
   var DEX_MILESTONES = [10, 25, 50, 100, 150, 151];
   var STORY_CLS = {
@@ -671,7 +680,7 @@
     }
     if (id == null) { var row = weighted(encounterTable(route)); id = row ? row.id : null; }
     if (id == null) return null;
-    var enc = { uid: S.encUid++, id: id, shiny: opts.shiny != null ? !!opts.shiny : Math.random() < SHINY_CHANCE, misses: 0 };
+    var enc = { uid: S.encUid++, id: id, shiny: opts.shiny != null ? !!opts.shiny : Math.random() < SHINY_CHANCE, misses: 0, t: S.stats.playtime };
     if (opts.catchRate != null) enc.catchRate = opts.catchRate;
     if (opts.noFlee) enc.noFlee = true;
     for (var i = 0; i < spawnHooks.length; i++) {
@@ -776,6 +785,27 @@
     TG.emit('throw', res);
     TG.emit('encounter', { type: 'throw', res: res });
     return res;
+  };
+  // Shoo an encounter away without a ball: frees the queue slot, pays a few taps' worth of RD.
+  TG.shoo = function (i) {
+    var enc = S.encounters[i];
+    if (!enc) return { ok: false, reason: 'none' };
+    if (enc.noFlee) return { ok: false, reason: 'noFlee' };
+    S.encounters.splice(i, 1);
+    var gain = TG.tapPower() * 3;
+    addRD(gain);
+    S.stats.shooed = (S.stats.shooed || 0) + 1;
+    var sp = TG.species(enc.id);
+    var line = SHOO_LINES[(S.stats.shooed - 1) % SHOO_LINES.length];
+    if (S.stats.shooed <= SHOO_LINES.length || Math.random() < 0.2) TG.log((sp ? sp.name.toUpperCase() + ': ' : '') + line, 'sys');
+    var res = { ok: true, enc: enc, gain: gain, index: i };
+    TG.emit('shoo', res);
+    TG.emit('encounter', { type: 'shoo', res: res });
+    return res;
+  };
+  TG.shooUid = function (uid) {
+    for (var i = 0; i < S.encounters.length; i++) if (S.encounters[i].uid === uid) return TG.shoo(i);
+    return { ok: false, reason: 'none' };
   };
   TG.throwBallUid = function (uid, auto) {
     for (var i = 0; i < S.encounters.length; i++) if (S.encounters[i].uid === uid) return TG.throwBall(i, auto);
@@ -1066,9 +1096,23 @@
     // Oak's ball drip until the Poké Mart opens
     if (!S.flags.mart) {
       S.acc.drip += dt;
-      if (S.acc.drip >= DRIP_SECONDS) {
-        S.acc.drip -= DRIP_SECONDS;
+      var stuck = S.balls < 1 && S.encounters.length >= TG.queueMax();
+      var dripEvery = stuck ? DRIP_SECONDS_STUCK : DRIP_SECONDS;
+      if (S.acc.drip >= dripEvery) {
+        S.acc.drip -= dripEvery;
         if (S.balls < DRIP_CAP) { S.balls += 1; TG.emit('drip', 1); }
+      }
+    }
+    // encounters that stood in the grass too long wander off, so a full queue never freezes the screen
+    for (var wi = 0; wi < S.encounters.length; wi++) {
+      var we = S.encounters[wi];
+      if (we.noFlee) continue;
+      if (we.t == null) { we.t = S.stats.playtime; continue; }
+      if (S.stats.playtime - we.t > WANDER_SECONDS) {
+        S.encounters.splice(wi, 1);
+        if (S.balls < 1) { var wsp = TG.species(we.id); TG.log('The wild ' + (wsp ? wsp.name.toUpperCase() : '???') + ' got bored and wandered off.', 'sys'); }
+        TG.emit('encounter', { type: 'wander', enc: we });
+        break; // at most one per tick
       }
     }
     // candy production

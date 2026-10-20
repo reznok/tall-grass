@@ -330,8 +330,15 @@
     if (encEl) {
       const res = TG.throwBallUid(Number(encEl.dataset.uid));
       if (!res.ok && res.reason === 'balls') {
-        UI.floatText(xPct, yPct, 'NO BALLS!', 'bad');
-        UI.toast(S().flags.mart ? 'Out of Poké Balls! Buy more at the Poké Mart.' : 'Out of Poké Balls! Prof. Oak sends one every 20s.');
+        // no ball: shoo it away instead so the queue never locks up
+        const sh = TG.shooUid(Number(encEl.dataset.uid));
+        if (sh.ok) {
+          UI.floatText(xPct, yPct, '+' + TG.fmt(sh.gain), '');
+          const n = S().stats.shooed || 0;
+          if (n === 1 || n % 10 === 0) UI.toast(S().flags.mart ? 'No Poké Balls. Buy more at the Poké Mart.' : 'No Poké Balls. Prof. Oak sends one every ' + (TG.config.dripSeconds || 15) + 's.');
+        } else {
+          UI.floatText(xPct, yPct, 'NO BALLS!', 'bad');
+        }
       }
       return;
     }
