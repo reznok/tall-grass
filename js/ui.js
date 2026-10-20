@@ -306,7 +306,7 @@
     const enc = st.encounters.length;
     const caught = TG.mults.dexCount > 0; // this run (stats survive prestige)
     if (enc && st.balls < 1 && !(TG.effects.autoCatch > 0 && TG.rates.balls > 0)) {
-      return st.flags.mart ? 'OUT OF BALLS · TAP +10 TO BUY' : 'NO BALLS · TAP ONE TO SHOO IT';
+      return st.flags.mart ? 'OUT OF BALLS · TAP +10 TO BUY' : 'NO BALLS · WAIT FOR OAK OR TAP ✕ TO SHOO';
     }
     if (enc && (st.stats.ballsThrown || 0) < 3 && !caught) return 'TAP A POKéMON TO THROW A BALL';
     if (!enc && !caught && st.taps < 40) return 'TAP THE TALL GRASS';
@@ -387,14 +387,12 @@
     if (encEl) {
       const res = TG.throwBallUid(Number(encEl.dataset.uid));
       if (!res.ok && res.reason === 'balls') {
-        // no ball: shoo it away instead so the queue never locks up
-        const sh = TG.shooUid(Number(encEl.dataset.uid));
-        if (sh.ok) {
-          UI.floatText(xPct, yPct, '+' + TG.fmt(sh.gain), '');
-          const n = S().stats.shooed || 0;
-          if (n === 1 || n % 10 === 0) UI.toast(S().flags.mart ? 'No Poké Balls. Buy more at the Poké Mart.' : 'No Poké Balls. Prof. Oak sends one every ' + (TG.config.dripSeconds || 15) + 's.');
-        } else {
-          UI.floatText(xPct, yPct, 'NO BALLS!', 'bad');
+        // no ball: just say so — the X button is the deliberate way to shoo
+        UI.floatText(xPct, yPct, 'NO BALLS!', 'bad');
+        const t = Date.now();
+        if (!onGrassDown._noBallToast || t - onGrassDown._noBallToast > 20000) {
+          onGrassDown._noBallToast = t;
+          UI.toast(S().flags.mart ? 'No Poké Balls. Buy more at the Poké Mart, or tap ✕ to shoo.' : 'No Poké Balls. Prof. Oak sends one every ' + (TG.config.dripSeconds || 15) + 's. Tap ✕ to shoo.');
         }
       }
       return;
